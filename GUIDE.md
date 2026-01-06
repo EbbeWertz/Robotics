@@ -15,8 +15,16 @@ Over de packages:
  - De installed packages krijg je door de commands in `./install-packages.sh`
  - Als installed packages custom config of scripts hebben, dan is er een eigen pacakge in `/src/` als een soort wrapper of launcher.
  - Elke pacakges in `./src/` heeft een `INFO.md` als guide voor die pacakage.
- - Een lijst van ALLE packages actief in dit project (installed en eigen) staat in PACKAGES.md
- - De INFO.md per pacakge bescrijft ook alle ROS Nodes, services, en topics in die pacakge
+
+ # Meer info:
+  - `./PACKAGES.md` bevat een lijst van alle relevante pacakges (eigen packages in `./src/` maar ook installed packages)
+  - Elke package heeft een `INFO.md` waar informatie voer die pacakge in staat 
+  - `./ROS_INFO` beschrijft per installed package alle (relevante):
+    - Nodes
+    - Services
+    - Topics
+    - Actions
+  - De Nodes, services, ... van eigen packages in `./src/` staan ook in elke `INFO.md` file (vanaf dat daar code in die pacakges zit)
 
 
 # Wat doen?
