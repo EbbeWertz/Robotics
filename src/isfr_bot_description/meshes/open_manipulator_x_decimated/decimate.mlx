@@ -1,0 +1,7 @@
+<FilterScript>
+ <filter name="Quadric Edge Collapse Decimation">
+  <Param name="TargetPerc" value="0.1"/>
+  <Param name="PreserveBoundary" value="true"/>
+  <Param name="PreserveNormal" value="true"/>
+ </filter>
+</FilterScript>

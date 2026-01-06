@@ -4,27 +4,15 @@
 # This is a proto file for Webots for the openmanipulator_x
 # Extracted from: /home/ebbew/robotrics_taak/isfr_bot_workspace/src/isfr_bot_description/urdf/openmanipulator_x.urdf
 
-PROTO openmanipulator_x [
+PROTO openmanipulator_x_solid [
   field  SFVec3f     translation     0 0 0
   field  SFRotation  rotation        0 0 1 0
-  field  SFString    name            "openmanipulator_x"  # Is `Robot.name`.
-  field  SFString    controller      "void"               # Is `Robot.controller`.
-  field  MFString    controllerArgs  []                   # Is `Robot.controllerArgs`.
-  field  SFString    customData      ""                   # Is `Robot.customData`.
-  field  SFBool      supervisor      FALSE                # Is `Robot.supervisor`.
-  field  SFBool      synchronization TRUE                 # Is `Robot.synchronization`.
-  field  SFBool      selfCollision   FALSE                # Is `Robot.selfCollision`.
+  field  SFString    name            "openmanipulator_x_solid"  # Is `Robot.name`.
 ]
 {
-  Robot {
+  Solid {
     translation IS translation
     rotation IS rotation
-    controller IS controller
-    controllerArgs IS controllerArgs
-    customData IS customData
-    supervisor IS supervisor
-    synchronization IS synchronization
-    selfCollision IS selfCollision
     children [
       Solid {
         children [
@@ -33,12 +21,12 @@ PROTO openmanipulator_x [
             children [
               Shape {
                 appearance DEF grey PBRAppearance {
-                  baseColor 0.200000 0.200000 0.200000
-                  roughness 1.000000
-                  metalness 0
+                  baseColor 0.400000 0.400000 0.200000
+                  roughness 0.200000
+                  metalness 0.8
                 }
                 geometry DEF link1 Mesh {
-                  url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/link1.stl"
+                  url "../meshes/open_manipulator_x_decimated/dec_link1.stl"
                 }
               }
             ]
@@ -69,9 +57,13 @@ PROTO openmanipulator_x [
                   scale 0.001000 0.001000 0.001000
                   children [
                     Shape {
-                      appearance USE grey
+                      appearance DEF blueish PBRAppearance {
+                        baseColor 0.100000 0.300000 0.600000
+                        roughness 0.200000
+                        metalness 0.8
+                      }
                       geometry DEF link2 Mesh {
-                        url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/link2.stl"
+                        url "../meshes/open_manipulator_x_decimated/dec_link2.stl"
                       }
                     }
                   ]
@@ -103,7 +95,7 @@ PROTO openmanipulator_x [
                           Shape {
                             appearance USE grey
                             geometry DEF link3 Mesh {
-                              url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/link3.stl"
+                              url "../meshes/open_manipulator_x_decimated/dec_link3.stl"
                             }
                           }
                         ]
@@ -133,9 +125,9 @@ PROTO openmanipulator_x [
                               scale 0.001000 0.001000 0.001000
                               children [
                                 Shape {
-                                  appearance USE grey
+                                  appearance USE blueish
                                   geometry DEF link4 Mesh {
-                                    url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/link4.stl"
+                                    url "../meshes/open_manipulator_x_decimated/dec_link4.stl"
                                   }
                                 }
                               ]
@@ -167,7 +159,7 @@ PROTO openmanipulator_x [
                                       Shape {
                                         appearance USE grey
                                         geometry DEF link5 Mesh {
-                                          url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/link5.stl"
+                                          url "../meshes/open_manipulator_x_decimated/dec_link5.stl"
                                         }
                                       }
                                     ]
@@ -196,16 +188,22 @@ PROTO openmanipulator_x [
                                           scale 0.001000 0.001000 0.001000
                                           children [
                                             Shape {
-                                              appearance USE grey
+                                              appearance DEF darkred PBRAppearance {
+                                                baseColor 0.8 0.100000 0.100000
+                                                roughness 0.5
+                                                metalness 0.5
+                                              }
                                               geometry DEF gripper_left_palm Mesh {
-                                                url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/gripper_left_palm.stl"
+                                                url "../meshes/open_manipulator_x_decimated/dec_gripper_left_palm.stl"
                                               }
                                             }
                                           ]
                                         }
                                       ]
                                       name "gripper_left_link"
-                                      boundingObject USE gripper_left_palm
+                                      boundingObject  DEF mini_gripper_left_palm Mesh {
+                                        url "../meshes/open_manipulator_x_decimated/mini_gripper_left_palm.stl"
+                                      }
                                       physics Physics {
                                         density -1
                                         mass 0.001000
@@ -241,16 +239,18 @@ PROTO openmanipulator_x [
                                           scale 0.001000 0.001000 0.001000
                                           children [
                                             Shape {
-                                              appearance USE grey
+                                              appearance USE darkred
                                               geometry DEF gripper_right_palm Mesh {
-                                                url "/opt/ros/jazzy/share/open_manipulator_description/meshes/open_manipulator_x/gripper_right_palm.stl"
+                                                url "../meshes/open_manipulator_x_decimated/dec_gripper_right_palm.stl"
                                               }
                                             }
                                           ]
                                         }
                                       ]
                                       name "gripper_right_link"
-                                      boundingObject USE gripper_right_palm
+                                      boundingObject  DEF mini_gripper_right_palm Mesh {
+                                        url "../meshes/open_manipulator_x_decimated/mini_gripper_right_palm.stl"
+                                      }
                                       physics Physics {
                                         density -1
                                         mass 0.001000
@@ -264,7 +264,9 @@ PROTO openmanipulator_x [
                                   }
                                 ]
                                 name "link5"
-                                boundingObject USE link5
+                                boundingObject  DEF mini_link5 Mesh {
+                                  url "../meshes/open_manipulator_x_decimated/mini_link5.stl"
+                                }
                                 physics Physics {
                                   density -1
                                   mass 0.143276
@@ -278,7 +280,9 @@ PROTO openmanipulator_x [
                             }
                           ]
                           name "link4"
-                          boundingObject USE link4
+                          boundingObject  DEF mini_link4 Mesh {
+                            url "../meshes/open_manipulator_x_decimated/mini_link4.stl"
+                          }
                           physics Physics {
                             density -1
                             mass 0.132746
@@ -292,7 +296,9 @@ PROTO openmanipulator_x [
                       }
                     ]
                     name "link3"
-                    boundingObject USE link3
+                    boundingObject  DEF mini_link3 Mesh {
+                      url "../meshes/open_manipulator_x_decimated/mini_link3.stl"
+                    }
                     physics Physics {
                       density -1
                       mass 0.138509
@@ -306,11 +312,8 @@ PROTO openmanipulator_x [
                 }
               ]
               name "link2"
-              boundingObject Pose {
-                translation 0.000000 0.000000 0.019000
-                children [
-                  USE link2
-                ]
+              boundingObject  DEF mini_link2 Mesh {
+                url "../meshes/open_manipulator_x_decimated/mini_link2.stl"
               }
               physics Physics {
                 density -1
@@ -325,7 +328,9 @@ PROTO openmanipulator_x [
           }
         ]
         name "link1"
-        boundingObject USE link1
+        boundingObject  DEF mini_link1 Mesh {
+          url "../meshes/open_manipulator_x_decimated/mini_link1.stl"
+        }
         physics Physics {
           density -1
           mass 0.079120

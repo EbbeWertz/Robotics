@@ -4,27 +4,15 @@
 # This is a proto file for Webots for the turtlebot3_waffle
 # Extracted from: /home/ebbew/robotrics_taak/isfr_bot_workspace/src/isfr_bot_description/urdf/turtlebot3_waffle.urdf
 
-PROTO turtlebot3_waffle [
+PROTO turtlebot3_waffle_solid [
   field  SFVec3f     translation     0 0 0
   field  SFRotation  rotation        0 0 1 0
-  field  SFString    name            "turtlebot3_waffle"  # Is `Robot.name`.
-  field  SFString    controller      "void"               # Is `Robot.controller`.
-  field  MFString    controllerArgs  []                   # Is `Robot.controllerArgs`.
-  field  SFString    customData      ""                   # Is `Robot.customData`.
-  field  SFBool      supervisor      FALSE                # Is `Robot.supervisor`.
-  field  SFBool      synchronization TRUE                 # Is `Robot.synchronization`.
-  field  SFBool      selfCollision   FALSE                # Is `Robot.selfCollision`.
+  field  SFString    name            "turtlebot3_waffle_solid"  # Is `Robot.name`.
 ]
 {
-  Robot {
+  Solid {
     translation IS translation
     rotation IS rotation
-    controller IS controller
-    controllerArgs IS controllerArgs
-    customData IS customData
-    supervisor IS supervisor
-    synchronization IS synchronization
-    selfCollision IS selfCollision
     children [
       Solid {
         translation 0.000000 0.000000 0.010000
@@ -41,7 +29,7 @@ PROTO turtlebot3_waffle [
                   metalness 0.9
                 }
                 geometry DEF waffle_base Mesh {
-                  url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/bases/waffle_base.stl"
+                  url "../meshes/turtlebot3_decimated/bases/dec_waffle_base.stl"
                 }
               }
             ]
@@ -75,7 +63,7 @@ PROTO turtlebot3_waffle [
                         metalness 0.3
                       }
                       geometry DEF left_tire Mesh {
-                        url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl"
+                        url "../meshes/turtlebot3_decimated/wheels/dec_left_tire.stl"
                       }
                     }
                   ]
@@ -126,7 +114,7 @@ PROTO turtlebot3_waffle [
                         metalness 0.3
                       }
                       geometry DEF right_tire Mesh {
-                        url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl"
+                        url "../meshes/turtlebot3_decimated/wheels/dec_right_tire.stl"
                       }
                     }
                   ]
@@ -201,7 +189,7 @@ PROTO turtlebot3_waffle [
                   Shape {
                     appearance USE dark
                     geometry DEF lds Mesh {
-                      url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/sensors/lds.stl"
+                      url "../meshes/turtlebot3_decimated/sensors/dec_lds.stl"
                     }
                   }
                 ]

@@ -1,0 +1,48 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "./turtlebot3_waffle_solid.proto"
+EXTERNPROTO "./openmanipulator_x_solid.proto"
+
+
+PROTO IsfrFullRobot [
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+  field SFString name "IsfrFullRobot"
+  field SFString controller "<extern>"
+  field MFString controllerArgs []
+  field SFString customData ""
+  field SFBool supervisor FALSE
+  field SFBool synchronization TRUE
+  field  SFBool selfCollision   FALSE                # Is `Robot.selfCollision`.
+
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+
+    children [
+      # --- Mobile base ---
+      turtlebot3_waffle_solid {
+        name "base"
+      }
+
+      # --- Manipulator mounted on top ---
+      Transform {
+        translation 0 0 0.12   # tune this
+        children [
+          openmanipulator_x_solid {
+            name "arm"
+          }
+        ]
+      }
+    ]
+  }
+}

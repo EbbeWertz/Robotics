@@ -22,8 +22,9 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projec
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/traffic/protos/DirectionPanel.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/plants/protos/BunchOfSunFlowers.proto"
 
-EXTERNPROTO "//wsl.localhost/Ubuntu/home/ebbew/robotrics_taak/isfr_bot_workspace/src/isfr_bot_description/protos/turtlebot3_waffle.proto"
-#EXTERNPROTO "OpenManipulatorX" "../../isfr_bot_description/protos/open_manipulator_x.proto"
+# world is in install/isfr_bot_bringup/share/isfr_bot_bringup/worlds
+# dus daarom 4 niveaus terug: ../../../../ en dan naar de share van isfr_bot_description
+EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/IsfrFullRobot.proto"
 
 WorldInfo {
   info [
@@ -41,18 +42,9 @@ TexturedBackground {
   texture "empty_office"
   skybox FALSE
 }
-turtlebot3_waffle {
+IsfrFullRobot {
   translation 6.36 0 0
   controller "<extern>"
-  controllerArgs [
-    ""
-  ]
-  #children [
-  #  OpenManipulatorX {
-  #    translation 0 0 0.015
-  #    #rotation 0 0 1 3.14159
-  #  }
-  #]
 }
 PottedTree {
   translation 7 -4 0

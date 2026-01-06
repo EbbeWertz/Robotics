@@ -6,7 +6,14 @@ package_name = 'isfr_bot_bringup'
 
 # Helper function to include all files in a folder
 def get_package_files(folder):
-    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(folder) for f in filenames]
+    files = []
+    for dp, dn, filenames in os.walk(folder):
+        for f in filenames:
+            path = os.path.join(dp, f)
+            if os.path.isfile(path):  # skip non-files
+                files.append(path)
+    return files
+
 
 setup(
     name=package_name,

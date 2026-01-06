@@ -25,12 +25,14 @@ def generate_launch_description():
     # File paths
     world_file = PathJoinSubstitution([pkg_bringup, 'worlds', world_file_name])
     urdf_file = os.path.join(pkg_desc, 'urdf', 'turtlebot3_waffle.urdf')
-    
+    proto_path = os.path.join(pkg_desc, 'protos')
+    windows_proto_path = proto_path.replace('/home/', '//wsl.localhost/Ubuntu/home/') # want webots = windows
 
     # Webots launcher
     node_webots = WebotsLauncher(
         world=world_file,
-        ros2_supervisor=True
+        ros2_supervisor=True,
+        env={'WEBOTS_ROBOT_PATH': windows_proto_path}, # zorgt ervoor dat webots de protos kan vinden
     )
 
     # Robot state publisher
