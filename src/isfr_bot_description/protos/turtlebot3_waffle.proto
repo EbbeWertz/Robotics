@@ -1,0 +1,272 @@
+#VRML_SIM R2023b utf8
+# license: Apache License 2.0
+# license url: http://www.apache.org/licenses/LICENSE-2.0
+# This is a proto file for Webots for the turtlebot3_waffle
+# Extracted from: /home/ebbew/robotrics_taak/isfr_bot_workspace/src/isfr_bot_description/urdf/turtlebot3_waffle.urdf
+
+PROTO turtlebot3_waffle [
+  field  SFVec3f     translation     0 0 0
+  field  SFRotation  rotation        0 0 1 0
+  field  SFString    name            "turtlebot3_waffle"  # Is `Robot.name`.
+  field  SFString    controller      "void"               # Is `Robot.controller`.
+  field  MFString    controllerArgs  []                   # Is `Robot.controllerArgs`.
+  field  SFString    customData      ""                   # Is `Robot.customData`.
+  field  SFBool      supervisor      FALSE                # Is `Robot.supervisor`.
+  field  SFBool      synchronization TRUE                 # Is `Robot.synchronization`.
+  field  SFBool      selfCollision   FALSE                # Is `Robot.selfCollision`.
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+    children [
+      Solid {
+        translation 0.000000 0.000000 0.010000
+        children [
+          Transform {
+            translation -0.064000 0.000000 0.000000
+            scale 0.001000 0.001000 0.001000
+            children [
+              Shape {
+                appearance DEF light_black PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry DEF waffle_base Mesh {
+                  url "/opt/ros/jazzy/share/turtlebot3_description/meshes/bases/waffle_base.stl"
+                }
+              }
+            ]
+          }
+          HingeJoint {
+            jointParameters HingeJointParameters {
+              axis 0.000000 1.000000 0.000796
+              anchor 0.000000 0.144000 0.023000
+            }
+            device [
+              RotationalMotor {
+                name "wheel_left_joint"
+                maxTorque 10000
+              }
+              PositionSensor {
+                name "wheel_left_joint_sensor"
+              }
+            ]
+            endPoint Solid {
+              translation 0.000000 0.144000 0.023000
+              rotation -1.000000 0.000000 0.000000 1.570000
+              children [
+                Transform {
+                  rotation 1.000000 0.000000 0.000000 1.570000
+                  scale 0.001000 0.001000 0.001000
+                  children [
+                    Shape {
+                      appearance DEF dark PBRAppearance {
+                        baseColor 0.500000 0.500000 0.500000
+                        roughness 1.000000
+                        metalness 0
+                      }
+                      geometry DEF left_tire Mesh {
+                        url "/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl"
+                      }
+                    }
+                  ]
+                }
+              ]
+              name "wheel_left_link"
+              boundingObject Cylinder {
+                radius 0.033
+                height 0.018
+              }
+              physics Physics {
+                density -1
+                mass 0.028499
+                centerOfMass [ 0.000000 0.000000 0.000000 ]
+                inertiaMatrix [
+                  1.117558e-05 1.119241e-05 2.071256e-05
+                  -4.236978e-11 -5.938172e-09 -1.440011e-11
+                ]
+              }
+            }
+          }
+          HingeJoint {
+            jointParameters HingeJointParameters {
+              axis 0.000000 1.000000 0.000796
+              anchor 0.000000 -0.144000 0.023000
+            }
+            device [
+              RotationalMotor {
+                name "wheel_right_joint"
+                maxTorque 10000
+              }
+              PositionSensor {
+                name "wheel_right_joint_sensor"
+              }
+            ]
+            endPoint Solid {
+              translation 0.000000 -0.144000 0.023000
+              rotation -1.000000 0.000000 0.000000 1.570000
+              children [
+                Transform {
+                  rotation 1.000000 0.000000 0.000000 1.570000
+                  scale 0.001000 0.001000 0.001000
+                  children [
+                    Shape {
+                      appearance USE dark
+                      geometry DEF right_tire Mesh {
+                        url "/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl"
+                      }
+                    }
+                  ]
+                }
+              ]
+              name "wheel_right_link"
+              boundingObject Cylinder {
+                radius 0.033
+                height 0.018
+              }
+              physics Physics {
+                density -1
+                mass 0.028499
+                centerOfMass [ 0.000000 0.000000 0.000000 ]
+                inertiaMatrix [
+                  1.117558e-05 1.119241e-05 2.071256e-05
+                  -4.236978e-11 -5.938172e-09 -1.440011e-11
+                ]
+              }
+            }
+          }
+          Solid {
+            translation -0.177000 -0.064000 -0.004000
+            rotation -1.000000 0.000000 0.000000 1.570000
+            name "caster_back_right_link"
+            boundingObject Pose {
+              translation 0.000000 0.001000 0.000000
+              children [
+                Box {
+                   size 0.030000 0.009000 0.020000
+                }
+              ]
+            }
+            physics Physics {
+              density -1
+              mass 0.005000
+              centerOfMass [ 0.000000 0.000000 0.000000 ]
+              inertiaMatrix [
+                1.000000e-03 1.000000e-03 1.000000e-03
+                0.000000e+00 0.000000e+00 0.000000e+00
+              ]
+            }
+          }
+          Solid {
+            translation -0.177000 0.064000 -0.004000
+            rotation -1.000000 0.000000 0.000000 1.570000
+            name "caster_back_left_link"
+            boundingObject Pose {
+              translation 0.000000 0.001000 0.000000
+              children [
+                Box {
+                   size 0.030000 0.009000 0.020000
+                }
+              ]
+            }
+            physics Physics {
+              density -1
+              mass 0.005000
+              centerOfMass [ 0.000000 0.000000 0.000000 ]
+              inertiaMatrix [
+                1.000000e-03 1.000000e-03 1.000000e-03
+                0.000000e+00 0.000000e+00 0.000000e+00
+              ]
+            }
+          }
+          Solid {
+            translation -0.064000 0.000000 0.122000
+            children [
+              Transform {
+                scale 0.001000 0.001000 0.001000
+                children [
+                  Shape {
+                    appearance USE dark
+                    geometry DEF lds Mesh {
+                      url "/opt/ros/jazzy/share/turtlebot3_description/meshes/sensors/lds.stl"
+                    }
+                  }
+                ]
+              }
+            ]
+            name "base_scan"
+            boundingObject Pose {
+              translation 0.015000 0.000000 -0.006500
+              children [
+                Cylinder {
+                  radius 0.055
+                  height 0.0315
+                }
+              ]
+            }
+            physics Physics {
+              density -1
+              mass 0.114000
+              centerOfMass [ 0.000000 0.000000 0.000000 ]
+              inertiaMatrix [
+                1.000000e-03 1.000000e-03 1.000000e-03
+                0.000000e+00 0.000000e+00 0.000000e+00
+              ]
+            }
+          }
+          Solid {
+            translation 0.064000 -0.065000 0.094000
+            children [
+              Pose {
+                rotation 0.577503 0.577044 0.577503 2.093475
+                children [
+                  DEF r200_visual CadShape {
+                    url "/opt/ros/jazzy/share/turtlebot3_description/meshes/sensors/r200.dae"
+                  }
+                ]
+              }
+            ]
+            name "camera_link"
+            boundingObject Pose {
+              translation 0.003000 0.065000 0.007000
+              children [
+                Box {
+                   size 0.012000 0.132000 0.020000
+                }
+              ]
+            }
+            physics Physics {
+            }
+          }
+        ]
+        name "base_link"
+        boundingObject Pose {
+          translation -0.064000 0.000000 0.047000
+          children [
+            Box {
+               size 0.266000 0.266000 0.094000
+            }
+          ]
+        }
+        physics Physics {
+          density -1
+          mass 1.372910
+          centerOfMass [ 0.000000 0.000000 0.000000 ]
+          inertiaMatrix [
+            8.700272e-03 8.619542e-03 1.461273e-02
+            -4.757658e-05 1.116050e-04 -3.542230e-06
+          ]
+        }
+      }
+    ]
+    name IS name
+  }
+}

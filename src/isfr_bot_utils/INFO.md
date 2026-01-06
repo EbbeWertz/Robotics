@@ -13,4 +13,7 @@ Eigen folders:
 Alle andere folders zijn ROS-generated
 
 ## Files
-nog niks
+ - `./scripts/xacro_to_urdf.sh`: Deze leest de xacro urdf descriptions van de turtlebot(waffle) en de openmanipulator(x) uit de installed description packages, en maakt pure (embedded, webots-friendly) urdf files in de `isfr_bot_description/urdf/` folder\
+ !! RUN met een terminal IN de scripts folder
+  - `./scripts/urdf_to_proto.sh`: Deze leest de generated urdf files uit de `isfr_bot_description` pacakge folder en generate proto files voor webots in de `isfr_bot_description/protos/` folder\
+ !! RUN met een terminal IN de scripts folder
