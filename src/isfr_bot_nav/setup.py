@@ -1,6 +1,11 @@
 from setuptools import find_packages, setup
+import os
 
 package_name = 'isfr_bot_nav'
+
+# Helper to recursively gather all files in a folder
+def get_package_files(folder):
+    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(folder) for f in filenames]
 
 setup(
     name=package_name,
@@ -9,12 +14,10 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/nav2_launch.py']),
-        ('share/' + package_name + '/resource', [
-            'resource/map.pgm',
-            'resource/map.yaml',
-            'resource/nav2_params.yaml'
-        ])
+        # Include all launch files automatically
+        ('share/' + package_name + '/launch', get_package_files('launch')),
+        # Include all resource files automatically
+        ('share/' + package_name + '/resource', get_package_files('resource')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -23,12 +26,9 @@ setup(
     description='TODO: Package description',
     license='TODO: License declaration',
     extras_require={
-        'test': [
-            'pytest',
-        ],
+        'test': ['pytest'],
     },
     entry_points={
-        'console_scripts': [
-        ],
+        'console_scripts': [],
     },
 )

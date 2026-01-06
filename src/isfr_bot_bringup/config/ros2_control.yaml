@@ -10,16 +10,16 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    arm_controller:
-      type: joint_group_position_controller/JointGroupPositionController
-      joints:
-        - joint1
-        - joint2
-        - joint3
-        - joint4
-        - gripper_left_joint
-        # Optional in simulation:
-        - gripper_right_joint
+    #arm_controller:
+    #  type: joint_group_position_controller/JointGroupPositionController
+    #  joints:
+    #    - joint1
+    #    - joint2
+    #    - joint3
+    #    - joint4
+    #    - gripper_left_joint
+    #    # Optional in simulation:
+    #    - gripper_right_joint
 
 diffdrive_controller:
   ros__parameters:
@@ -37,7 +37,7 @@ joint_state_broadcaster:
     use_sim_time: true
     # No need to specify joints; it reads from URDF
 
-arm_controller:
-  ros__parameters:
-    use_sim_time: true
-    # Optional: tune joint limits, gains, etc., via ROS 2 control parameter overrides
+#arm_controller:
+#  ros__parameters:
+#    use_sim_time: true
+#    # Optional: tune joint limits, gains, etc., via ROS 2 control parameter overrides

@@ -34,13 +34,14 @@ PROTO turtlebot3_waffle [
             scale 0.001000 0.001000 0.001000
             children [
               Shape {
+                castShadows FALSE
                 appearance DEF light_black PBRAppearance {
-                  baseColor 0.500000 0.500000 0.500000
-                  roughness 1.000000
-                  metalness 0
+                  baseColor 0.1 0.1 0.8   # dark blue
+                  roughness 0.1
+                  metalness 0.9
                 }
                 geometry DEF waffle_base Mesh {
-                  url "/opt/ros/jazzy/share/turtlebot3_description/meshes/bases/waffle_base.stl"
+                  url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/bases/waffle_base.stl"
                 }
               }
             ]
@@ -69,12 +70,12 @@ PROTO turtlebot3_waffle [
                   children [
                     Shape {
                       appearance DEF dark PBRAppearance {
-                        baseColor 0.500000 0.500000 0.500000
-                        roughness 1.000000
-                        metalness 0
+                        baseColor 0.1 0.1 0.1   # dark
+                        roughness 0.6
+                        metalness 0.3
                       }
                       geometry DEF left_tire Mesh {
-                        url "/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl"
+                        url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl"
                       }
                     }
                   ]
@@ -119,9 +120,13 @@ PROTO turtlebot3_waffle [
                   scale 0.001000 0.001000 0.001000
                   children [
                     Shape {
-                      appearance USE dark
+                      appearance DEF light_black PBRAppearance {
+                        baseColor 0.3 0.3 0.3   # dark
+                        roughness 0.6
+                        metalness 0.3
+                      }
                       geometry DEF right_tire Mesh {
-                        url "/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl"
+                        url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl"
                       }
                     }
                   ]
@@ -196,7 +201,7 @@ PROTO turtlebot3_waffle [
                   Shape {
                     appearance USE dark
                     geometry DEF lds Mesh {
-                      url "/opt/ros/jazzy/share/turtlebot3_description/meshes/sensors/lds.stl"
+                      url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/sensors/lds.stl"
                     }
                   }
                 ]
@@ -228,9 +233,7 @@ PROTO turtlebot3_waffle [
               Pose {
                 rotation 0.577503 0.577044 0.577503 2.093475
                 children [
-                  DEF r200_visual CadShape {
-                    url "/opt/ros/jazzy/share/turtlebot3_description/meshes/sensors/r200.dae"
-                  }
+                  
                 ]
               }
             ]

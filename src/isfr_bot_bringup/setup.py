@@ -1,6 +1,12 @@
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
 package_name = 'isfr_bot_bringup'
+
+# Helper function to include all files in a folder
+def get_package_files(folder):
+    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(folder) for f in filenames]
 
 setup(
     name=package_name,
@@ -9,8 +15,12 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + "/launch", ['launch/robot_launch.py']),
-        ('share/' + package_name + "/config", ['config/ros_control.yaml'])
+        # Include all launch files
+        ('share/' + package_name + '/launch', get_package_files('launch')),
+        # Include all config files
+        ('share/' + package_name + '/config', get_package_files('config')),
+        # Include all worlds
+        ('share/' + package_name + '/worlds', get_package_files('worlds')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -19,12 +29,9 @@ setup(
     description='TODO: Package description',
     license='TODO: License declaration',
     extras_require={
-        'test': [
-            'pytest',
-        ],
+        'test': ['pytest'],
     },
     entry_points={
-        'console_scripts': [
-        ],
+        'console_scripts': [],
     },
 )

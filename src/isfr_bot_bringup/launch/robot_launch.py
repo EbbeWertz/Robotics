@@ -4,28 +4,41 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    # Path to the bringup package
-    pkg_dir = get_package_share_directory('isfr_bot_bringup')
+    pkg_bringup = get_package_share_directory('isfr_bot_bringup')
+    pkg_desc = get_package_share_directory('isfr_bot_description')
 
-    # Webots world file
-    world_file = os.path.join(pkg_dir, 'worlds', 'my_custom_world.wbt')
+    # Paths
+    world_file = os.path.join(pkg_bringup, 'worlds', '/webots_living_room_world.wbt')
+    ros2_control_file = os.path.join(pkg_bringup, 'config', 'ros2_control.yaml')
 
-    # ROS 2 control YAML
-    ros2_control_file = os.path.join(pkg_dir, 'config', 'ros2_control.yaml')
+    # URDF paths
+    turtlebot_urdf = os.path.join(pkg_desc, 'urdf', 'turtlebot3_waffle.urdf')
+    manipulator_urdf = os.path.join(pkg_desc, 'urdf', 'openmanipulator_x.urdf')
+
+    # Option 1: use only TurtleBot3 URDF
+    robot_description_file = turtlebot_urdf
+    # Option 2: merge URDFs into one if you want combined robot
+    # robot_description_file = merge_urdfs(turtlebot_urdf, manipulator_urdf)
 
     return LaunchDescription([
-        # Launch Webots with your world
+
+        # Launch Webots
         Node(
             package='webots_ros2_driver',
             executable='driver',
             output='screen',
-            parameters=[{
-                'world': world_file,
-                'use_sim_time': True
-            }],
+            parameters=[{'world': world_file, 'use_sim_time': True}],
         ),
 
-        # Start ROS 2 control node with controllers
+        # Publish robot_description so ros2_control_node can start
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            output='screen',
+            parameters=[{'robot_description': open(robot_description_file).read()}],
+        ),
+
+        # ROS 2 control node
         Node(
             package='controller_manager',
             executable='ros2_control_node',
@@ -33,7 +46,7 @@ def generate_launch_description():
             parameters=[ros2_control_file, {'use_sim_time': True}],
         ),
 
-        # Spawn controllers automatically
+        # Spawn controllers
         Node(
             package='controller_manager',
             executable='spawner',

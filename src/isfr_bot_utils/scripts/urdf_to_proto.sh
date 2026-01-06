@@ -9,13 +9,13 @@ mkdir -p $PROTO_DIR
 # TurtleBot3 Waffle
 ros2 run webots_ros2_importer urdf2proto \
   --input=$DESC_DIR/urdf/turtlebot3_waffle.urdf \
-  --disable-mesh-optimization \
-  --output=$PROTO_DIR/turtlebot3_waffle.proto
+  --optimize-mesh \
+  --output=$PROTO_DIR/turtlebot3_waffle_RAW.proto
 
 # OpenManipulator X
 ros2 run webots_ros2_importer urdf2proto \
   --input=$DESC_DIR/urdf/openmanipulator_x.urdf \
-  --disable-mesh-optimization \
-  --output=$PROTO_DIR/openmanipulator_x.proto
+  --optimize-mesh \
+  --output=$PROTO_DIR/openmanipulator_x_RAW.proto
  
 echo "klaar"

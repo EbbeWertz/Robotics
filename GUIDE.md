@@ -49,3 +49,6 @@ Over de packages:
       - *_msgs
       - *_turtlebot3
       - andere robots die niet boeien
+ - maak `WEBOTS_HOME` variable:
+   - bvb: `export WEBOTS_HOME=/mnt/c/Program\ Files/Webots`
+   - of: `export WEBOTS_HOME=/mnt/c/Users/houwe/AppData/Local/Programs/Webots`
