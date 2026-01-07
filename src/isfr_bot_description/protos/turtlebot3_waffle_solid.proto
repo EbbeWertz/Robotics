@@ -29,7 +29,7 @@ PROTO turtlebot3_waffle_solid [
                   metalness 0.9
                 }
                 geometry DEF waffle_base Mesh {
-                  url "../meshes/turtlebot3_decimated/bases/dec_waffle_base.stl"
+                  url "../meshes/turtlebot3_waffle/decimated/dec_waffle_base.stl"
                 }
               }
             ]
@@ -63,7 +63,7 @@ PROTO turtlebot3_waffle_solid [
                         metalness 0.3
                       }
                       geometry DEF left_tire Mesh {
-                        url "../meshes/turtlebot3_decimated/wheels/dec_left_tire.stl"
+                        url "../meshes/turtlebot3_waffle/decimated/dec_left_tire.stl"
                       }
                     }
                   ]
@@ -114,7 +114,7 @@ PROTO turtlebot3_waffle_solid [
                         metalness 0.3
                       }
                       geometry DEF right_tire Mesh {
-                        url "../meshes/turtlebot3_decimated/wheels/dec_right_tire.stl"
+                        url "../meshes/turtlebot3_waffle/decimated/dec_right_tire.stl"
                       }
                     }
                   ]
@@ -189,7 +189,7 @@ PROTO turtlebot3_waffle_solid [
                   Shape {
                     appearance USE dark
                     geometry DEF lds Mesh {
-                      url "../meshes/turtlebot3_decimated/sensors/dec_lds.stl"
+                      url "../meshes/turtlebot3_waffle/decimated/dec_lds.stl"
                     }
                   }
                 ]

@@ -26,7 +26,7 @@ PROTO openmanipulator_x_solid [
                   metalness 0.8
                 }
                 geometry DEF link1 Mesh {
-                  url "../meshes/open_manipulator_x_decimated/dec_link1.stl"
+                  url "../meshes/open_manipulator_x/decimated_visual/dec_link1.stl"
                 }
               }
             ]
@@ -63,7 +63,7 @@ PROTO openmanipulator_x_solid [
                         metalness 0.8
                       }
                       geometry DEF link2 Mesh {
-                        url "../meshes/open_manipulator_x_decimated/dec_link2.stl"
+                        url "../meshes/open_manipulator_x/decimated_visual/dec_link2.stl"
                       }
                     }
                   ]
@@ -95,7 +95,7 @@ PROTO openmanipulator_x_solid [
                           Shape {
                             appearance USE grey
                             geometry DEF link3 Mesh {
-                              url "../meshes/open_manipulator_x_decimated/dec_link3.stl"
+                              url "../meshes/open_manipulator_x/decimated_visual/dec_link3.stl"
                             }
                           }
                         ]
@@ -127,7 +127,7 @@ PROTO openmanipulator_x_solid [
                                 Shape {
                                   appearance USE blueish
                                   geometry DEF link4 Mesh {
-                                    url "../meshes/open_manipulator_x_decimated/dec_link4.stl"
+                                    url "../meshes/open_manipulator_x/decimated_visual/dec_link4.stl"
                                   }
                                 }
                               ]
@@ -159,7 +159,7 @@ PROTO openmanipulator_x_solid [
                                       Shape {
                                         appearance USE grey
                                         geometry DEF link5 Mesh {
-                                          url "../meshes/open_manipulator_x_decimated/dec_link5.stl"
+                                          url "../meshes/open_manipulator_x/decimated_visual/dec_link5.stl"
                                         }
                                       }
                                     ]
@@ -194,7 +194,7 @@ PROTO openmanipulator_x_solid [
                                                 metalness 0.5
                                               }
                                               geometry DEF gripper_left_palm Mesh {
-                                                url "../meshes/open_manipulator_x_decimated/dec_gripper_left_palm.stl"
+                                                url "../meshes/open_manipulator_x/decimated_visual/dec_gripper_left_palm.stl"
                                               }
                                             }
                                           ]
@@ -202,7 +202,7 @@ PROTO openmanipulator_x_solid [
                                       ]
                                       name "gripper_left_link"
                                       boundingObject  DEF mini_gripper_left_palm Mesh {
-                                        url "../meshes/open_manipulator_x_decimated/mini_gripper_left_palm.stl"
+                                        url "../meshes/open_manipulator_x/decimated_collision/mini_gripper_left_palm.stl"
                                       }
                                       physics Physics {
                                         density -1
@@ -241,7 +241,7 @@ PROTO openmanipulator_x_solid [
                                             Shape {
                                               appearance USE darkred
                                               geometry DEF gripper_right_palm Mesh {
-                                                url "../meshes/open_manipulator_x_decimated/dec_gripper_right_palm.stl"
+                                                url "../meshes/open_manipulator_x/decimated_visual/dec_gripper_right_palm.stl"
                                               }
                                             }
                                           ]
@@ -249,7 +249,7 @@ PROTO openmanipulator_x_solid [
                                       ]
                                       name "gripper_right_link"
                                       boundingObject  DEF mini_gripper_right_palm Mesh {
-                                        url "../meshes/open_manipulator_x_decimated/mini_gripper_right_palm.stl"
+                                        url "../meshes/open_manipulator_x/decimated_collision/mini_gripper_right_palm.stl"
                                       }
                                       physics Physics {
                                         density -1
@@ -265,7 +265,7 @@ PROTO openmanipulator_x_solid [
                                 ]
                                 name "link5"
                                 boundingObject  DEF mini_link5 Mesh {
-                                  url "../meshes/open_manipulator_x_decimated/mini_link5.stl"
+                                  url "../meshes/open_manipulator_x/decimated_collision/mini_link5.stl"
                                 }
                                 physics Physics {
                                   density -1
@@ -281,7 +281,7 @@ PROTO openmanipulator_x_solid [
                           ]
                           name "link4"
                           boundingObject  DEF mini_link4 Mesh {
-                            url "../meshes/open_manipulator_x_decimated/mini_link4.stl"
+                            url "../meshes/open_manipulator_x/decimated_collision/mini_link4.stl"
                           }
                           physics Physics {
                             density -1
@@ -297,7 +297,7 @@ PROTO openmanipulator_x_solid [
                     ]
                     name "link3"
                     boundingObject  DEF mini_link3 Mesh {
-                      url "../meshes/open_manipulator_x_decimated/mini_link3.stl"
+                      url "../meshes/open_manipulator_x/decimated_collision/mini_link3.stl"
                     }
                     physics Physics {
                       density -1
@@ -313,7 +313,7 @@ PROTO openmanipulator_x_solid [
               ]
               name "link2"
               boundingObject  DEF mini_link2 Mesh {
-                url "../meshes/open_manipulator_x_decimated/mini_link2.stl"
+                url "../meshes/open_manipulator_x/decimated_collision/mini_link2.stl"
               }
               physics Physics {
                 density -1
@@ -329,7 +329,7 @@ PROTO openmanipulator_x_solid [
         ]
         name "link1"
         boundingObject  DEF mini_link1 Mesh {
-          url "../meshes/open_manipulator_x_decimated/mini_link1.stl"
+          url "../meshes/open_manipulator_x/decimated_collision/mini_link1.stl"
         }
         physics Physics {
           density -1
