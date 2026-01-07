@@ -39,6 +39,8 @@ setup(
         'test': ['pytest'],
     },
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'twist_stamper = isfr_bot_bringup.twist_stamper:main'
+        ],
     },
 )
