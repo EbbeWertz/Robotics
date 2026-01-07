@@ -4,6 +4,8 @@
 # This is a proto file for Webots for the turtlebot3_waffle
 # Extracted from: /home/ebbew/robotrics_taak/isfr_bot_workspace/src/isfr_bot_description/urdf/turtlebot3_waffle.urdf
 
+EXTERNPROTO "./openmanipulator_x_solid.proto"
+
 PROTO turtlebot3_waffle_solid [
   field  SFVec3f     translation     0 0 0
   field  SFRotation  rotation        0 0 1 0

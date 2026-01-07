@@ -27,19 +27,16 @@ PROTO IsfrFullRobot [
     selfCollision IS selfCollision
 
     children [
-      # --- Mobile base ---
       turtlebot3_waffle_solid {
-        name "turtlebot3_waffle"   # match URDF name
+        name "turtlebot3_waffle"
       }
-
-      # --- Manipulator ---
       Transform {
-        translation 0 0 0.12
+        translation -0.14 0 0.1
         children [
           openmanipulator_x_solid {
-            name "open_manipulator_x"  # match URDF name
-          }
-        ]
+            name "open_manipulator_x" # match URDF name 
+          } 
+        ] 
       }
     ]
   }
