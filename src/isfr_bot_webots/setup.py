@@ -21,7 +21,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         data_folder(package_name, "launch"),
         data_folder(package_name, "worlds"),
-        ('share/' + package_name + "/resource", ['resource/ros2_control.yaml'])
+        data_folder(package_name, "controllers"),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

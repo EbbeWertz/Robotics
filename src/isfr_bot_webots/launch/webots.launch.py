@@ -23,9 +23,9 @@ def generate_launch_description():
     isfr_bot_webots_package = get_package_share_directory('isfr_bot_webots')
     isfr_bot_description_package = get_package_share_directory('isfr_bot_description')
     urdf_file = os.path.join(isfr_bot_description_package,'urdf','IsfrFullRobot.urdf')
-    ros2_control_file = os.path.join(isfr_bot_webots_package, 'resource', 'ros2_control.yaml')
+    ros2_control_file = os.path.join(isfr_bot_webots_package, 'controllers', 'ros2_control.yml')
 
-    urdf_robot_content = open(urdf_file).read()
+    urdf_content = open(urdf_file).read()
 
     # NODES:
     # launches webots
@@ -36,19 +36,20 @@ def generate_launch_description():
     )
     # Makes topics for joint states
     # WEBOTS CONTROLLER MAKES ITS OWN RSP --> this one commented = not used
-    # rspNode = Node(
-    #     package='robot_state_publisher',
-    #     executable='robot_state_publisher',
-    #     output='screen',
-    #     # robot description = empty cuz webotsController node has its own RSP
-    #     parameters=[{'robot_description': '<robot name=""><link name=""/></robot>'}],
-    # )
+    # MAAR FOR SOME REASON KAN JE DEZE NIET WEGLATEN???
+    rspNode = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        # robot description = empty cuz webotsController node has its own RSP
+        parameters=[{'robot_description': '<robot name=""><link name=""/></robot>'}],
+    )
     # makes topics for the robot footprint
     footprintPublisherNode = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         output='screen',
-        arguments=['0', '0', '0', '0', '0', '0', 'base_footprint', 'base_link'],
+        arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'base_footprint'],
     )
     # ROS2 controller spawner Nodes:
     controller_manager_timeout = ['--controller-manager-timeout', '50']
@@ -80,7 +81,7 @@ def generate_launch_description():
     webotsControllerNode = WebotsController(
         robot_name=proto_robot_name,
         parameters=[
-            {'robot_description': urdf_robot_content,
+            {'robot_description': urdf_content,
              'use_sim_time': use_sim_time,
              'set_robot_state_publisher': True},
             ros2_control_file
@@ -95,7 +96,7 @@ def generate_launch_description():
     # Handles spawning the *SpawnerNode nodes after the controller is online
     waitingNodes = WaitForControllerConnection(
         target_driver=webotsControllerNode,
-        nodes_to_start=[jointStateBroadcasterSpawnerNode, diffdriveControllerSpawnerNode]
+        nodes_to_start=[diffdriveControllerSpawnerNode, jointStateBroadcasterSpawnerNode],
     )
 
     return LaunchDescription([
@@ -104,7 +105,7 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         webotsLauncherNode,
         webotsLauncherNode._supervisor,
-        # rspNode,
+        rspNode,
         footprintPublisherNode,
         twistStamperNode,
         webotsControllerNode,

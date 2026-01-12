@@ -1,43 +1,48 @@
 <?xml version="1.0"?>
-<robot name="isfr_bot">
+<robot name="TurtleBot3Waffle">
 
-  <!-- ================= BASE ================= -->
-  <link name="base_link"/>
+  <!-- ================= WEBOTS EXTENSIONS ================= -->
+  <webots>
+    <!-- Lidar -->
+    <device reference="lidar_sensor" type="Lidar">
+      <ros>
+        <enabled>true</enabled>
+        <updateRate>5</updateRate>
+        <topicName>/scan</topicName>
+        <alwaysOn>false</alwaysOn>
+        <frameName>lidar_sensor</frameName>
+      </ros>
+    </device>
 
-  <!-- ================= WHEELS ================= -->
-  <link name="wheel_left_link"/>
-  <link name="wheel_right_link"/>
+    <!-- IMU -->
+    <plugin type="webots_ros2_driver::Ros2IMU">
+      <enabled>true</enabled>
+      <updateRate>20</updateRate>
+      <topicName>/imu</topicName>
+      <alwaysOn>false</alwaysOn>
+      <frameName>imu_link</frameName>
+      <inertialUnitName>imu_sensor</inertialUnitName>
+      <gyroName>gyro_sensor</gyroName>
+      <accelerometerName>accelerometer_sensor</accelerometerName>
+    </plugin>
 
-  <joint name="left_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="wheel_left_link"/>
-    <origin xyz="0 0.144 0.023" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
+    <!-- ROS2 Control plugin -->
+    <plugin type="webots_ros2_control::Ros2Control"/>
+  </webots>
 
-  <joint name="right_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="wheel_right_link"/>
-    <origin xyz="0 -0.144 0.023" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
-
-  <!-- ================= IMU ================= -->
-  <link name="imu_link"/>
-
-  <joint name="imu_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="imu_link"/>
-    <origin xyz="-0.064 0 0.1015" rpy="0 0 0"/>
-  </joint>
-
-  <!-- ================= LIDAR ================= -->
-  <link name="base_scan"/>
-
-  <joint name="lidar_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="base_scan"/>
-    <origin xyz="-0.064 0 0.1015" rpy="0 0 0"/>
-  </joint>
+  <!-- ================= ROS2 CONTROL ================= -->
+  <ros2_control name="WebotsControl" type="system">
+    <hardware>
+      <plugin>webots_ros2_control::Ros2ControlSystem</plugin>
+    </hardware>
+    <joint name="leftwheel_motor">
+      <state_interface name="position"/>
+      <command_interface name="velocity"/>
+    </joint>
+    <joint name="rightwheel_motor">
+      <state_interface name="position"/>
+      <command_interface name="velocity"/>
+    </joint>
+  </ros2_control>
 
 </robot>

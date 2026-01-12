@@ -1,26 +1,27 @@
 controller_manager:
   ros__parameters:
-    update_rate: 100
+    update_rate: 50
+
+    diffdrive_controller:
+      type: diff_drive_controller/DiffDriveController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    diff_drive_controller:
-      type: diff_drive_controller/DiffDriveController
-
-diff_drive_controller:
+diffdrive_controller:
   ros__parameters:
-    left_wheel_names: ["left_wheel_joint"]
-    right_wheel_names: ["right_wheel_joint"]
+    left_wheel_names: ["leftwheel_motor"]
+    right_wheel_names: ["rightwheel_motor"]
 
     wheel_separation: 0.288
     wheel_radius: 0.033
 
-    publish_rate: 50
-
     base_frame_id: base_link
-    odom_frame_id: odom
-    enable_odom_tf: true
 
-    cmd_vel_timeout: 0.5
     use_stamped_vel: false
+
+joint_state_broadcaster:
+  ros__parameters:
+    extra_joints:
+      - lidar_sensor_secondary_motor
+      - lidar_sensor_main_motor

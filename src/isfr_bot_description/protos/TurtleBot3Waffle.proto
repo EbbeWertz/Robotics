@@ -40,6 +40,7 @@ PROTO TurtleBot3Waffle [
           }
           RobotisLds01 {
             name "lidar_sensor"
+            # sub-devices = {name}_main_motor, {name}_secondary_motor
           }
         ]
       }
@@ -56,14 +57,14 @@ PROTO TurtleBot3Waffle [
       }
       
       # --- IMU SENSORS (Added for ROS2 Driver) ---
-      # Accelerometer {
-      #   name "accelerometer_sensor"
-      #   translation 0 0 0.068 # Approximate IMU location
-      # }
-      # Gyro {
-      #   name "gyro_sensor"
-      #   translation 0 0 0.068
-      # }
+      Accelerometer {
+        name "accelerometer_sensor"
+        translation 0 0 0.068 # Approximate IMU location
+      }
+      Gyro {
+        name "gyro_sensor"
+        translation 0 0 0.068
+      }
       # Compass {
       #   name "compass_sensor"
       #   translation -0.032 0 0.078

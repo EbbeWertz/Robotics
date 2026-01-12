@@ -1,8 +1,8 @@
 #VRML_SIM R2025a utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/backgrounds/protos/TexturedBackground.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/devices/robotis/protos/RobotisLds01.proto"
+#EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
+#EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/devices/robotis/protos/RobotisLds01.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/plants/protos/PottedTree.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/floors/protos/Floor.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/appearances/protos/CementTiles.proto"
@@ -24,7 +24,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projec
 
 # world is in install/isfr_bot_bringup/share/isfr_bot_bringup/worlds
 # dus daarom 4 niveaus terug: ../../../../ en dan naar de share van isfr_bot_description
-EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/IsfrFullRobot.proto"
+EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/TurtleBot3Waffle.proto"
 
 WorldInfo {
   info [
@@ -36,14 +36,14 @@ WorldInfo {
 Viewpoint {
   orientation -0.11718548305748538 -0.09206045903853269 0.9888338760591683 4.574760471010984
   position 6.468073365672595 1.1067646953060812 0.43311182735348225
-  follow "TurtleBot3Burger:LDS-01"
+  follow "TurtleBot3Burger:lidar_sensor"
 }
 TexturedBackground {
   texture "empty_office"
   skybox FALSE
 }
-IsfrFullRobot {
-  translation 6.36 0 0
+TurtleBot3Waffle {
+  translation 6.36 0 0.1
   controller "<extern>"
 }
 PottedTree {
