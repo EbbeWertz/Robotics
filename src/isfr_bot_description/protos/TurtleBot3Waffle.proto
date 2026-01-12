@@ -1,0 +1,157 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/devices/robotis/protos/RobotisLds01.proto"
+
+
+PROTO TurtleBot3Waffle [
+  field  SFVec3f     translation     0 0 0
+  field  SFRotation  rotation        0 0 1 0
+  field  SFString    name            "TurtleBot3Waffle"
+  field  SFString    controller      "<generic>"
+  field  MFString    controllerArgs  []
+  field  SFString    customData      ""
+  field  SFBool      supervisor      FALSE
+  field  SFBool      synchronization TRUE
+  field  SFBool      selfCollision   FALSE
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+    children [  
+      Pose {
+        # translation -0.03 0 0.153
+        translation -0.064 0 0.1015
+        children [
+          Solid {
+            name "imu_link"
+          }
+          # GPS {
+          #   name "gps_sensor"
+          # }
+          InertialUnit {
+            name "imu_sensor"
+          }
+          RobotisLds01 {
+            name "lidar_sensor"
+          }
+        ]
+      }
+      # --- VISUALS (Simplified for brevity, keep your original Transform/Shapes here) ---
+      Transform {
+        translation -0.064 0 0
+        scale 0.001 0.001 0.001
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 0.5 0.5 0.5 roughness 1 metalness 0 }
+            geometry Mesh { url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/bases/waffle_base.stl" }
+          }
+        ]
+      }
+      
+      # --- IMU SENSORS (Added for ROS2 Driver) ---
+      # Accelerometer {
+      #   name "accelerometer_sensor"
+      #   translation 0 0 0.068 # Approximate IMU location
+      # }
+      # Gyro {
+      #   name "gyro_sensor"
+      #   translation 0 0 0.068
+      # }
+      # Compass {
+      #   name "compass_sensor"
+      #   translation -0.032 0 0.078
+      # }
+      # --- JOINTS ---
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0 1 0
+          anchor 0 0.144 0.023
+        }
+        device [
+          RotationalMotor {
+            name "leftwheel_motor" # Matches URDF
+            maxTorque 10
+            maxVelocity 6.67
+          }
+          PositionSensor {
+            name "leftwheel_pos_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation 0 0.144 0.023
+          rotation -1 0 0 1.57
+          name "wheel_left_link"
+          boundingObject Cylinder { radius 0.033 height 0.018 }
+          physics Physics { density -1 mass 0.0285 }
+          children [
+             Transform {
+                rotation 1 0 0 1.57
+                scale 0.001 0.001 0.001
+                children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.3 } geometry Mesh { url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl" } } ]
+             }
+          ]
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0 1 0
+          anchor 0 -0.144 0.023
+        }
+        device [
+          RotationalMotor {
+            name "rightwheel_motor" # Matches URDF
+            maxTorque 10
+            maxVelocity 6.67
+          }
+          PositionSensor {
+            name "rightwheel_pos_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation 0 -0.144 0.023
+          rotation -1 0 0 1.57
+          name "wheel_right_link"
+          boundingObject Cylinder { radius 0.033 height 0.018 }
+          physics Physics { density -1 mass 0.0285 }
+          children [
+             Transform {
+                rotation 1 0 0 1.57
+                scale 0.001 0.001 0.001
+                children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.3 } geometry Mesh { url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl" } } ]
+             }
+          ]
+        }
+      }
+      # --- CASTERS (Keep original logic) ---
+      Solid {
+        translation -0.177 -0.064 -0.004
+        name "caster_back_right_link"
+        boundingObject Box { size 0.03 0.009 0.02 }
+        physics Physics { mass 0.005 }
+      }
+      Solid {
+        translation -0.177 0.064 -0.004
+        name "caster_back_left_link"
+        boundingObject Box { size 0.03 0.009 0.02 }
+        physics Physics { mass 0.005 }
+      }
+    ]
+    name IS name
+    boundingObject Pose {
+      translation -0.064 0 0.047
+      children [ Box { size 0.266 0.266 0.094 } ]
+    }
+    physics Physics {
+      density -1
+      mass 1.37291
+      centerOfMass [ 0 0 0 ]
+    }
+  }
+}

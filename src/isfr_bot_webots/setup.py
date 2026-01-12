@@ -20,7 +20,8 @@ setup(
         ('share/ament_index/resource_index/packages',['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         data_folder(package_name, "launch"),
-        data_folder(package_name, "worlds")
+        data_folder(package_name, "worlds"),
+        ('share/' + package_name + "/resource", ['resource/ros2_control.yaml'])
     ],
     install_requires=['setuptools'],
     zip_safe=True,
