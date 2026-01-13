@@ -16,6 +16,7 @@ def generate_launch_description():
     world = LaunchConfiguration('world', default='living_room.wbt')
     mode = LaunchConfiguration('mode', default='realtime')
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
+    use_slam = LaunchConfiguration("create_map", default=False)
 
     proto_robot_name = "TurtleBot3Waffle"
 
@@ -24,8 +25,8 @@ def generate_launch_description():
     isfr_bot_description_package = get_package_share_directory('isfr_bot_description')
     urdf_file = os.path.join(isfr_bot_description_package,'urdf','IsfrFullRobot.urdf')
     ros2_control_file = os.path.join(isfr_bot_webots_package, 'controllers', 'ros2_control.yml')
-
-    urdf_content = open(urdf_file).read()
+    slam_config_file = os.path.join(isfr_bot_webots_package,'config','slam_toolbox.yml')
+    localisation_config_file = os.path.join(isfr_bot_webots_package, 'config', 'localisation.yaml')
 
     # NODES:
     # launches webots
@@ -72,31 +73,48 @@ def generate_launch_description():
     )
     # Twist stamper to put timestamps on twist messages:
     # (defined in custom python file in this package)
-    twistStamperNode = Node(
-        package='isfr_bot_webots',
-        executable='twist_stamper',
-        output='screen'
-    )
+    # twistStamperNode = Node(
+    #     package='isfr_bot_webots',
+    #     executable='twist_stamper',
+    #     output='screen'
+    # )
     # Webots main robot controller
     webotsControllerNode = WebotsController(
         robot_name=proto_robot_name,
         parameters=[
-            {'robot_description': urdf_content,
+            {'robot_description': urdf_file,
              'use_sim_time': use_sim_time,
              'set_robot_state_publisher': True},
             ros2_control_file
         ],
         remappings=[
-            ('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped'),
+            ('/diffdrive_controller/cmd_vel', '/cmd_vel'),
             ('/diffdrive_controller/odom', '/odom')
         ],
         respawn=True
     )
 
+    # Uses SLAM to create a map    
+    slamToolboxNode = Node(
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen',
+        parameters=[slam_config_file],
+        condition=launch.conditions.IfCondition(use_slam)
+    )
+    localisationNode = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[localisation_config_file],
+    )
+
     # Handles spawning the *SpawnerNode nodes after the controller is online
     waitingNodes = WaitForControllerConnection(
         target_driver=webotsControllerNode,
-        nodes_to_start=[diffdriveControllerSpawnerNode, jointStateBroadcasterSpawnerNode],
+        nodes_to_start=[diffdriveControllerSpawnerNode, jointStateBroadcasterSpawnerNode, localisationNode, slamToolboxNode],
     )
 
     return LaunchDescription([
@@ -107,7 +125,7 @@ def generate_launch_description():
         webotsLauncherNode._supervisor,
         rspNode,
         footprintPublisherNode,
-        twistStamperNode,
+        # twistStamperNode,
         webotsControllerNode,
         waitingNodes,
 

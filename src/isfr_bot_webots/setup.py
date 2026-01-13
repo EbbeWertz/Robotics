@@ -22,6 +22,7 @@ setup(
         data_folder(package_name, "launch"),
         data_folder(package_name, "worlds"),
         data_folder(package_name, "controllers"),
+        data_folder(package_name, "config"),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

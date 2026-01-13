@@ -28,13 +28,14 @@ PROTO TurtleBot3Waffle [
       Pose {
         # translation -0.03 0 0.153
         translation -0.064 0 0.1015
+        # children van deze pose = "extensionslot" in de originele burger proto
         children [
           Solid {
             name "imu_link"
           }
-          # GPS {
-          #   name "gps_sensor"
-          # }
+          GPS {
+            name "gps_sensor"
+          }
           InertialUnit {
             name "imu_sensor"
           }
@@ -44,7 +45,7 @@ PROTO TurtleBot3Waffle [
           }
         ]
       }
-      # --- VISUALS (Simplified for brevity, keep your original Transform/Shapes here) ---
+      # --- BASE visual ---
       Transform {
         translation -0.064 0 0
         scale 0.001 0.001 0.001
@@ -56,7 +57,7 @@ PROTO TurtleBot3Waffle [
         ]
       }
       
-      # --- IMU SENSORS (Added for ROS2 Driver) ---
+      # --- IMU SENSORS---
       Accelerometer {
         name "accelerometer_sensor"
         translation 0 0 0.068 # Approximate IMU location
@@ -65,11 +66,11 @@ PROTO TurtleBot3Waffle [
         name "gyro_sensor"
         translation 0 0 0.068
       }
-      # Compass {
-      #   name "compass_sensor"
-      #   translation -0.032 0 0.078
-      # }
-      # --- JOINTS ---
+      Compass {
+        name "compass_sensor"
+        translation -0.032 0 0.078
+      }
+      # --- Left wheel Joint ---
       HingeJoint {
         jointParameters HingeJointParameters {
           axis 0 1 0
@@ -79,27 +80,44 @@ PROTO TurtleBot3Waffle [
           RotationalMotor {
             name "leftwheel_motor" # Matches URDF
             maxTorque 10
-            maxVelocity 6.67
+            maxVelocity 20
           }
           PositionSensor {
             name "leftwheel_pos_sensor"
+            resolution 0.00628
           }
         ]
         endPoint Solid {
           translation 0 0.144 0.023
           rotation -1 0 0 1.57
           name "wheel_left_link"
-          boundingObject Cylinder { radius 0.033 height 0.018 }
-          physics Physics { density -1 mass 0.0285 }
+          boundingObject Cylinder {
+            radius 0.033
+            height 0.018
+          }
+          physics Physics {
+            density -1
+            mass 0.0285
+          }
           children [
              Transform {
                 rotation 1 0 0 1.57
                 scale 0.001 0.001 0.001
-                children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.3 } geometry Mesh { url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl" } } ]
+                children [
+                  Shape {
+                    appearance PBRAppearance {
+                      baseColor 0.3 0.3 0.3
+                    }
+                    geometry Mesh {
+                      url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/left_tire.stl"
+                    } 
+                  }
+                ]
              }
           ]
         }
       }
+      # Right wheel joint
       HingeJoint {
         jointParameters HingeJointParameters {
           axis 0 1 0
@@ -109,23 +127,39 @@ PROTO TurtleBot3Waffle [
           RotationalMotor {
             name "rightwheel_motor" # Matches URDF
             maxTorque 10
-            maxVelocity 6.67
+            maxVelocity 20
           }
           PositionSensor {
             name "rightwheel_pos_sensor"
+            resolution 0.00628
           }
         ]
         endPoint Solid {
           translation 0 -0.144 0.023
           rotation -1 0 0 1.57
           name "wheel_right_link"
-          boundingObject Cylinder { radius 0.033 height 0.018 }
-          physics Physics { density -1 mass 0.0285 }
+          boundingObject Cylinder {
+            radius 0.033
+            height 0.018
+          }
+          physics Physics {
+            density -1
+            mass 0.0285
+          }
           children [
              Transform {
                 rotation 1 0 0 1.57
                 scale 0.001 0.001 0.001
-                children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.3 } geometry Mesh { url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl" } } ]
+                children [
+                  Shape {
+                    appearance PBRAppearance {
+                      baseColor 0.3 0.3 0.3
+                    }
+                    geometry Mesh {
+                      url "//wsl.localhost/Ubuntu/opt/ros/jazzy/share/turtlebot3_description/meshes/wheels/right_tire.stl"
+                    }
+                  }
+                ]
              }
           ]
         }
