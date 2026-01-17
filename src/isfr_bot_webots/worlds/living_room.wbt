@@ -1,8 +1,6 @@
 #VRML_SIM R2025a utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/backgrounds/protos/TexturedBackground.proto"
-#EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
-#EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/devices/robotis/protos/RobotisLds01.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/plants/protos/PottedTree.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/floors/protos/Floor.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/appearances/protos/CementTiles.proto"
@@ -17,13 +15,20 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projec
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/lights/protos/FloorLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/living_room_furniture/protos/Sofa.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/living_room_furniture/protos/Armchair.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/paintings/protos/LandscapePainting.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/tables/protos/Table.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/traffic/protos/DirectionPanel.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/plants/protos/BunchOfSunFlowers.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/toys/protos/RubberDuck.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/oven/protos/Oven.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/components/protos/HotPlate.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/components/protos/Sink.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/components/protos/Worktop.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/television/protos/Television.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/drinks/protos/BeerBottle.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/chairs/protos/Chair.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/utensils/protos/Glass.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/appearances/protos/VarnishedPine.proto"
 
-# world is in install/isfr_bot_bringup/share/isfr_bot_bringup/worlds
-# dus daarom 4 niveaus terug: ../../../../ en dan naar de share van isfr_bot_description
 EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/TurtleBot3Waffle.proto"
 
 WorldInfo {
@@ -34,8 +39,8 @@ WorldInfo {
   basicTimeStep 20
 }
 Viewpoint {
-  orientation -0.11718548305748538 -0.09206045903853269 0.9888338760591683 4.574760471010984
-  position 6.468073365672595 1.1067646953060812 0.43311182735348225
+  orientation -0.030671620970365625 0.9969070676410786 0.07235710161633306 1.109408674439798
+  position -2.623339671729218 -0.03565957032525634 19.787275515592732
   follow "TurtleBot3Burger:lidar_sensor"
 }
 TexturedBackground {
@@ -47,12 +52,12 @@ TurtleBot3Waffle {
   controller "<extern>"
 }
 PottedTree {
-  translation 7 -4 0
+  translation 9.81 1.67 0
   rotation 0 0 1 1.5708
   name "potted tree(5)"
 }
 PottedTree {
-  translation 5.8 3.3 0
+  translation 6.89 4.65 0
   rotation 0 0 1 1.5708
   name "potted tree(8)"
 }
@@ -66,6 +71,99 @@ Floor {
       scale 0.6 0.6
     }
   }
+}
+Chair {
+  translation 8.19 4.02 0
+  rotation 0 0 1 -1.5707953071795862
+}
+Chair {
+  translation 9.02 4.02 0
+  rotation 0 0 1 -1.5707953071795862
+  name "chair(1)"
+}
+Chair {
+  translation 9.02 2.46 0
+  rotation 0 0 1 1.5708
+  name "chair(2)"
+}
+Chair {
+  translation 8.18 2.46 0
+  rotation 0 0 1 1.5708
+  name "chair(3)"
+}
+Glass {
+  translation 5.26 -0.45 0.3
+}
+Glass {
+  translation 5.18 -0.53 0.3
+  name "glass(1)"
+}
+Glass {
+  translation 5.36 -0.2 0.3
+  name "glass(2)"
+}
+Glass {
+  translation 5.29 -0.11 0.3
+  name "glass(3)"
+}
+Glass {
+  translation 5.29 0.12 0.3
+  name "glass(4)"
+}
+Glass {
+  translation 5.32 0.22 0.3
+  name "glass(5)"
+}
+BeerBottle {
+  translation 5.3 -0.79 0.3
+}
+BeerBottle {
+  translation 5.24 -0.66 0.3
+  name "beer bottle(1)"
+}
+BeerBottle {
+  translation 5.25 -0.34 0.3
+  name "beer bottle(2)"
+}
+BeerBottle {
+  translation 5.3 -0.01 0.3
+  name "beer bottle(3)"
+}
+Wall {
+  translation 5.53 1.28 0
+  rotation 0 0 1 -1.5707953071795862
+}
+Wall {
+  translation 5.5 1.88 0
+  rotation 0 0 1 3.14159
+  name "wall(4)"
+  size 0.2 1 0.7
+}
+Wall {
+  translation 5.5 3.54 0
+  rotation 0 0 1 3.14159
+  name "wall(8)"
+  size 0.2 1.5 0.7
+}
+Wall {
+  translation 9.13 1.28 0
+  rotation 0 0 1 -1.5707953071795862
+  name "wall(3)"
+  size 0.2 2 2.4
+}
+Sink {
+  translation 5.39 3.9 0.78
+}
+Worktop {
+  translation 5.39 2.83 0.72
+  rotation 0 0 1 1.5708
+  size 2.9 0.6 0.05
+}
+Oven {
+  translation 5.43 2.59 0
+}
+HotPlate {
+  translation 5.33 2.62 0.72
 }
 Window {
   translation 6.5 -5.1 0
@@ -157,30 +255,30 @@ Door {
   }
 }
 Cabinet {
-  translation 9.5 -2.5 0
+  translation 9.97959 -3.84 0.000197256
   rotation 0.00011300299708654554 0.00011407199705898447 0.999999987108951 3.14137
 }
 CardboardBox {
-  translation 9.7 4.7 0.3
+  translation 9.7 0.89 0.299989
   rotation -0.577349935856137 0.577349935856137 0.5773509358560258 2.09439
 }
 CardboardBox {
-  translation 9 4.6 0.3
+  translation 9 0.35 0.300169
   rotation 0.06500310682387538 0.06496520681989673 -0.995768104533426 -1.5750353071795864
   name "cardboard box(1)"
 }
 CardboardBox {
-  translation 9.6 4 0.3
+  translation 9.6 0.02 0.300147
   rotation -0.06496610766674145 -0.06500200767097807 -0.9957681175119917 -1.5750353071795864
   name "cardboard box(2)"
 }
 CardboardBox {
-  translation 9.4 4.5 0.9
+  translation 9.49175 0.391901 0.888739
   rotation -0.06512832729035975 -0.027078811346683294 -0.997509417980808 -2.358005307179586
   name "cardboard box(3)"
 }
 Fridge {
-  translation 5.7 4.64 0
+  translation 5.52 4.63 4.32035e-05
   rotation 0.5822796992968663 -0.5748877031142695 0.5748517031328608 -0.0003953071795859131
 }
 FloorLight {
@@ -192,19 +290,15 @@ FloorLight {
   pointLightCastShadows TRUE
 }
 Sofa {
-  translation 9 -0.518 0
-  rotation 0.00014495699695408652 0 0.9999999894937345 3.14131
+  translation 7.69938 -2.24768 0.000376949
+  rotation 0.00014493699695534708 -0.00014493699695534708 0.9999999789932665 -1.5710753071795862
 }
 Armchair {
-  translation 7.62 1.03 0
-  rotation 0.00022763298820402747 0 0.999999974091611 -1.5710253071795863
-}
-LandscapePainting {
-  translation 8.5 -4.98 1.2
-  rotation -0.00014498499390527302 -0.00014496999390590354 -0.9999999789815259 -1.570515307179586
+  translation 5.61898 -3.41971 0.00146852
+  rotation -0.57625118446783 0.57625118446783 -0.5795421855213356 0.000395069
 }
 PottedTree {
-  translation 9.17 -1.7 0
+  translation 9.77 -2.76 0
   rotation 0 0 1 1.5708
 }
 PottedTree {
@@ -213,15 +307,65 @@ PottedTree {
   name "potted tree(3)"
 }
 Table {
-  translation 7.7 -0.52 0
-  rotation 0 0.00022690898831680196 0.9999999742561552 -1.570565307179586
+  translation 7.7008 -3.77 0.00073745
+  rotation -0.573823990568342 -0.573823990568342 0.5843389903955123 0.000395388
   size 1.3 0.8 0.5
+  feetSize 0.2 0.2
+  feetPadding 0.1
+  frameThickness 0.1
+}
+Table {
+  translation 8.5593 3.25016 -0.000660344
+  rotation -0.573823990568342 -0.573823990568342 0.5843389903955123 0.000395388
+  name "table(2)"
+  size 1.7 1 0.7
+  feetSize 0.15 0.15
+  feetPadding 0.05
+  trayAppearance VarnishedPine {
+    colorOverride 0.290196 0.243137 0.207843
+    textureTransform TextureTransform {
+      scale 10 10
+    }
+  }
+  legAppearance VarnishedPine {
+    colorOverride 0.337255 0.282353 0.243137
+    textureTransform TextureTransform {
+      scale 4 5
+    }
+  }
+}
+Table {
+  translation 5.26011 -0.0505431 -0.000660216
+  rotation 1.6320099579857856e-12 -0.00022690899415848958 -0.9999999742561537 1.570565307179586
+  name "table(1)"
+  size 1.7 0.3 0.3
+  feetSize 0.5 0.1
+  frameThickness 0
+  trayAppearance VarnishedPine {
+    colorOverride 1 0.894118 0.803922
+    textureTransform TextureTransform {
+      scale 10 10
+    }
+  }
+  legAppearance VarnishedPine {
+    colorOverride 1 0.94902 0.894118
+    textureTransform TextureTransform {
+      scale 4 5
+    }
+  }
+}
+Television {
+  translation 8.24 -4.95 0.99
+  rotation 0 0 1 1.5708
 }
 DirectionPanel {
   translation 8 5 1.5
   rotation 0.00010265399783649644 -0.00010265399783649644 0.9999999894621566 1.5708
 }
 BunchOfSunFlowers {
-  translation 7.68 -0.52 0.5
+  translation 7.4 -4.82 0
   rotation 0 0 1 1.5708
+}
+RubberDuck {
+  translation 7.62 -3.49 0.62
 }

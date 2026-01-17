@@ -41,6 +41,7 @@ PROTO TurtleBot3Waffle [
           }
           RobotisLds01 {
             name "lidar_sensor"
+            noise 0.0005
             # sub-devices = {name}_main_motor, {name}_secondary_motor
           }
         ]

@@ -28,6 +28,8 @@
 
     <!-- ROS2 Control plugin -->
     <plugin type="webots_ros2_control::Ros2Control"/>
+      <plugin type="isfr_bot_webots.ground_truth_odom_publisher.GroundTruthOdomPublisher">
+      </plugin>
   </webots>
 
   <!-- ================= ROS2 CONTROL ================= -->

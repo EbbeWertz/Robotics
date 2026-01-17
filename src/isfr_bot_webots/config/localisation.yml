@@ -12,6 +12,7 @@ ekf_filter_node:
     odom_frame: odom
     base_link_frame: base_link
     world_frame: odom
+    output_odom_topic: /odom
 
     # Wheel odometry
     odom0: /diffdrive_controller/odom
@@ -35,3 +36,5 @@ ekf_filter_node:
     imu0_differential: false
     imu0_relative: false
     imu0_remove_gravitational_acceleration: true
+
+
