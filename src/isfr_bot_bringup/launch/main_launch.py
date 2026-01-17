@@ -23,7 +23,7 @@ def generate_launch_description():
     urdf_file = os.path.join(
         description_pkg,
         'urdf',
-        'turtlebot3_waffle.urdf'
+        'isfr_bot.urdf'
     )
 
     robot_description = ParameterValue(
