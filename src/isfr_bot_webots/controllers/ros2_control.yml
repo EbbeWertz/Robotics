@@ -10,6 +10,8 @@ controller_manager:
 
 diffdrive_controller:
   ros__parameters:
+    publish_odom: false
+    publish_odom_tf: false
     left_wheel_names: ["leftwheel_motor"]
     right_wheel_names: ["rightwheel_motor"]
 

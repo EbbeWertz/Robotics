@@ -96,7 +96,6 @@ def generate_launch_description():
         ],
         remappings=[
             ('/diffdrive_controller/cmd_vel', '/cmd_vel'),
-            ('/diffdrive_controller/odom', '/odom')
         ],
         respawn=False
     )
