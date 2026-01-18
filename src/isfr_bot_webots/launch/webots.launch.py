@@ -21,6 +21,20 @@ def generate_launch_description():
     use_slam = LaunchConfiguration("create_map", default=False)
 
     proto_robot_name = "TurtleBot3Waffle"
+    
+    camera_config = """
+    <robot name="TurtleBot3Waffle">
+        <webots>
+            <device reference="camera_sensor" type="Camera">
+                <ros>
+                    <topicName>/TurtleBot3Waffle/camera_sensor/image_raw</topicName>
+                    <alwaysOn>true</alwaysOn>
+                    <enabled>true</enabled>
+                </ros>
+            </device>
+        </webots>
+    </robot>
+    """
 
     # PATHS
     isfr_bot_webots_package = get_package_share_directory('isfr_bot_webots')
@@ -82,7 +96,7 @@ def generate_launch_description():
     webotsControllerNode = WebotsController(
         robot_name=proto_robot_name,
         parameters=[
-            {'robot_description': urdf_file,
+            {'robot_description': camera_config,
              'use_sim_time': use_sim_time,
              'set_robot_state_publisher': True},
             ros2_control_file

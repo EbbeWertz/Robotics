@@ -20,7 +20,7 @@ class YoloDetector(Node):
         # In Webots is het vaak /NAAM_VAN_ROBOT/NAAM_VAN_CAMERA/image_raw
         self.subscription = self.create_subscription(
             Image,
-            '/isfr_bot/camera_sensor/image_raw', 
+            '/TurtleBot3Waffle/camera_sensor/image_raw', 
             self.image_callback,
             10)
         
@@ -31,6 +31,7 @@ class YoloDetector(Node):
 
     def image_callback(self, msg):
         try:
+            self.get_logger().info("Beeld ontvangen, verwerken...")
             # 3. Converteer ROS image naar OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             

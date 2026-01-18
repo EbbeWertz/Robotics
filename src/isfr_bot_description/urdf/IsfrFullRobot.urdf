@@ -14,6 +14,16 @@
       </ros>
     </device>
 
+    <device reference="camera_sensor" type="Camera">
+      <ros>
+        <enabled>true</enabled>
+        <updateRate>30</updateRate>
+        <topicName>/isfr_bot/camera_sensor/image_raw</topicName>
+        <alwaysOn>false</alwaysOn>
+        <frameName>camera_link</frameName>
+      </ros>
+    </device>
+
     <!-- IMU -->
     <plugin type="webots_ros2_driver::Ros2IMU">
       <enabled>true</enabled>
