@@ -34,7 +34,7 @@ setup(
     entry_points={
         'console_scripts': [
             'launch.frontend.launch_extension = launch_ros.launch.frontend.launch_extension',
-            'twist_stamper = isfr_bot_webots.twist_stamper:main'
+            'ground_truth_odom = isfr_bot_webots.ground_truth_odom_publisher:main'
         ],
     },
 )

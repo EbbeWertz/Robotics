@@ -1,84 +1,130 @@
-import math
+#!/usr/bin/env python3
 
 import rclpy
-from nav_msgs.msg import Odometry
+from rclpy.node import Node
+
 from geometry_msgs.msg import TransformStamped
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import PointStamped, Vector3Stamped
+
 import tf2_ros
 
 
-class GroundTruthOdomPublisher:
-    def init(self, webots_node, properties):
-        rclpy.init(args=None)
+class GroundTruthOdomPublisher(Node):
 
-        self.__robot = webots_node.robot          # Supervisor
-        self.__node = rclpy.create_node('odom_gt_publisher')
+    def __init__(self):
+        super().__init__('ground_truth_odom')
 
-        self.__node.get_logger().info('  - properties: ' + str(properties))
-        self.__node.get_logger().info('  - robot name: ' + self.__robot.getName())
-        self.__node.get_logger().info('  - is supervisor? ' + str(self.__robot.getSupervisor()))
+        self.declare_parameter('odom_frame', 'odom')
+        self.declare_parameter('base_link_frame', 'base_link')
 
-        # Get robot DEF name from properties or hardcode it
-        robot_def = properties.get('robotDef', 'MY_ROBOT')
-        self.__robot_node = self.__robot.getFromDef(robot_def)
+        self.odom_frame = self.get_parameter('odom_frame').value
+        self.base_link_frame = self.get_parameter('base_link_frame').value
 
-        if self.__robot_node is None:
-            raise RuntimeError(f'No node found with DEF "{robot_def}"')
+        # State storage
+        self.position = None
+        self.linear_velocity = None
+        self.imu_msg = None
 
-        self.__odom_pub = self.__node.create_publisher(Odometry, '/odom', 10)
-        self.__tf_broadcaster = tf2_ros.TransformBroadcaster(self.__node)
+        # Subscribers
+        self.create_subscription(
+            PointStamped,
+            '/TurtleBot3Waffle/gps_sensor',
+            self.gps_callback,
+            10
+        )
 
-    def step(self):
-        rclpy.spin_once(self.__node, timeout_sec=0)
+        self.create_subscription(
+            Vector3Stamped,
+            '/TurtleBot3Waffle/gps_sensor/speed_vector',
+            self.speed_callback,
+            10
+        )
 
-        # --- Ground truth pose ---
-        pos = self.__robot_node.getPosition()      # [x, y, z]
-        ori = self.__robot_node.getOrientation()   # 3x3 rotation matrix (row-major)
+        self.create_subscription(
+            Imu,
+            '/imu',
+            self.imu_callback,
+            10
+        )
 
-        # Yaw from rotation matrix
-        # Webots orientation matrix:
-        # [ r00 r01 r02
-        #   r10 r11 r12
-        #   r20 r21 r22 ]
-        yaw = math.atan2(ori[2], ori[0])
+        # Publisher
+        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
 
-        qz = math.sin(yaw * 0.5)
-        qw = math.cos(yaw * 0.5)
+        # TF broadcaster
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        now = self.__node.get_clock().now().to_msg()
+        # Timer
+        self.timer = self.create_timer(0.02, self.publish_odom)  # 50 Hz
+
+        self.get_logger().info('Ground-truth odometry node started.')
+
+    def gps_callback(self, msg):
+        self.position = msg.point
+
+    def speed_callback(self, msg):
+        self.linear_velocity = msg.vector
+
+    def imu_callback(self, msg):
+        self.imu_msg = msg
+
+    def publish_odom(self):
+        if self.position is None or self.imu_msg is None:
+            return
+
+        now = self.get_clock().now().to_msg()
 
         # --- Odometry message ---
         odom = Odometry()
         odom.header.stamp = now
-        odom.header.frame_id = 'odom'
-        odom.child_frame_id = 'base_link'
+        odom.header.frame_id = self.odom_frame
+        odom.child_frame_id = self.base_link_frame
 
-        odom.pose.pose.position.x = pos[0]
-        odom.pose.pose.position.y = pos[2]
-        odom.pose.pose.position.z = 0.0
+        # Position (ground truth from GPS)
+        odom.pose.pose.position.x = self.position.x
+        odom.pose.pose.position.y = self.position.y
+        odom.pose.pose.position.z = 0.0  # planar robot
 
-        odom.pose.pose.orientation.z = qz
-        odom.pose.pose.orientation.w = qw
+        # Orientation (ground truth from IMU)
+        odom.pose.pose.orientation = self.imu_msg.orientation
 
-        vel = self.__robot_node.getVelocity()
-        # vel = [vx, vy, vz, wx, wy, wz]
-        odom.twist.twist.linear.x = vel[0]
-        odom.twist.twist.linear.y = vel[2]
-        odom.twist.twist.angular.z = vel[4]
+        # Linear velocity (ground truth from GPS)
+        if self.linear_velocity is not None:
+            odom.twist.twist.linear.x = self.linear_velocity.x
+            odom.twist.twist.linear.y = self.linear_velocity.y
+            odom.twist.twist.linear.z = 0.0
 
-        self.__odom_pub.publish(odom)
+        # Angular velocity (from IMU)
+        odom.twist.twist.angular = self.imu_msg.angular_velocity
+
+        # Zero covariance → ground truth
+        odom.pose.covariance = [0.0] * 36
+        odom.twist.covariance = [0.0] * 36
+
+        self.odom_pub.publish(odom)
 
         # --- TF ---
         t = TransformStamped()
         t.header.stamp = now
-        t.header.frame_id = 'odom'
-        t.child_frame_id = 'base_link'
+        t.header.frame_id = self.odom_frame
+        t.child_frame_id = self.base_link_frame
 
-        t.transform.translation.x = pos[0]
-        t.transform.translation.y = pos[2]
+        t.transform.translation.x = self.position.x
+        t.transform.translation.y = self.position.y
         t.transform.translation.z = 0.0
+        t.transform.rotation = self.imu_msg.orientation
 
-        t.transform.rotation.z = qz
-        t.transform.rotation.w = qw
+        self.tf_broadcaster.sendTransform(t)
 
-        self.__tf_broadcaster.sendTransform(t)
 
+def main(args=None):
+    rclpy.init(args=args)
+    node = GroundTruthOdomPublisher()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
