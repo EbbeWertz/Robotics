@@ -20,7 +20,7 @@ class YoloDetector(Node):
         # In Webots is het vaak /NAAM_VAN_ROBOT/NAAM_VAN_CAMERA/image_raw
         self.subscription = self.create_subscription(
             Image,
-            '/TurtleBot3Waffle/camera_sensor/image_raw', 
+            '/isfr/camera_sensor/image_raw/image_color', 
             self.image_callback,
             10)
         
@@ -31,7 +31,6 @@ class YoloDetector(Node):
 
     def image_callback(self, msg):
         try:
-            self.get_logger().info("Beeld ontvangen, verwerken...")
             # 3. Converteer ROS image naar OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             
@@ -43,19 +42,24 @@ class YoloDetector(Node):
             annotated_frame = results[0].plot()
 
             # 6. Check wat we gevonden hebben
-            # YOLO classes: 39=bottle, 40=wine glass, 41=cup
             for box in results[0].boxes:
                 class_id = int(box.cls[0])
                 class_name = self.model.names[class_id]
-                
+                confidence = float(box.conf[0])
+            
+                # FILTER 1: Het Bierflesje
                 if class_name == 'bottle':
-                    self.get_logger().info(f'FLESJE GEVONDEN! (Zekerheid: {float(box.conf[0]):.2f})')
+                    self.get_logger().info(f'🍺 BIERFLESJE GEVONDEN! (Zekerheid: {confidence:.2f})')
+                    # Hier kun je later code toevoegen om erheen te rijden
                 
+                # FILTER 2: Het Glas
+                # Glazen worden vaak als 'cup' of 'wine glass' gezien
                 elif class_name in ['wine glass', 'cup']: 
-                    self.get_logger().info(f'GLAS GEVONDEN! ({class_name})')
+                    self.get_logger().info(f'🥛 GLAS GEVONDEN! (Type: {class_name}, Zekerheid: {confidence:.2f})')
                     
                 else:
-                    self.get_logger().info(f'Ander object gevonden: {class_name}')
+                    # Debugging: Handig om te zien wat YOLO nog meer ziet
+                    self.get_logger().info(f'Iets anders gezien: {class_name}')
 
             # 7. Publiceer het beeld terug (zodat jij het kan zien in rviz/rqt)
             img_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding="bgr8")
