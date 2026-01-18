@@ -5,16 +5,13 @@ ros2 pkg create --build-type ament_python isfr_bot_webots
 
 # Wat is dit?
 Deze package launcht webots en alle nodige controllers.
-Er is ook een custom node die de odometrie van de diffdrive controller vervangt met perfecte odometry:
-disable deze door `odom_gt:=false` aan de launch file toe te voegen.
-<!-- TODO Die odom_gt en een fatsoenlijke launch file moet ik nog ff maken als ik refactor -->
+Er is ook een custom node die de odometrie van de diffdrive controller vervangt met perfecte odometry.
 
 ## Folders
 Eigen folders:
  - `./controllers/`: Bevat config files voor ros2 controllers (controllers gebruiken topics defined door de urdf)
  - `./worlds/`: Webots werelden (❗❗❗)
  - `./launch/`: Launcher voor basic webots-ros op te starten. De bringup launcher gebruikt deze ook
- <!-- TODO dit moet nog gebeuren in de refactor -->
 
 
 ## Files

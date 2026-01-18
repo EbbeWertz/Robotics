@@ -34,7 +34,9 @@ setup(
     entry_points={
         'console_scripts': [
             'launch.frontend.launch_extension = launch_ros.launch.frontend.launch_extension',
-            'ground_truth_odom = isfr_bot_webots.ground_truth_odom_publisher:main'
+            'ground_truth_odom = isfr_bot_webots.ground_truth_odom_publisher:main',
+            'publish_webots_ready = isfr_bot_webots.publish_webots_ready:main',
+            'wait_for_webots_ready = isfr_bot_webots.wait_for_webots_ready:main'
         ],
     },
 )
