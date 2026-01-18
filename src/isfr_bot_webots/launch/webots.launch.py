@@ -78,13 +78,6 @@ def generate_launch_description():
         prefix=controller_manager_prefix,
         arguments=['joint_state_broadcaster'] + controller_manager_timeout,
     )
-    # Twist stamper to put timestamps on twist messages:
-    # (defined in custom python file in this package)
-    # twistStamperNode = Node(
-    #     package='isfr_bot_webots',
-    #     executable='twist_stamper',
-    #     output='screen'
-    # )
     # Webots main robot controller
     webotsControllerNode = WebotsController(
         robot_name=proto_robot_name,
@@ -101,14 +94,14 @@ def generate_launch_description():
     )
 
     # Uses SLAM to create a map    
-    # slamToolboxNode = Node(
-    #     package='slam_toolbox',
-    #     executable='async_slam_toolbox_node',
-    #     name='slam_toolbox',
-    #     output='screen',
-    #     parameters=[slam_config_file],
-    #     condition=launch.conditions.IfCondition(use_slam)
-    # )
+    slamToolboxNode = Node(
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen',
+        parameters=[slam_config_file],
+        condition=launch.conditions.IfCondition(use_slam)
+    )
     # turtlebot_slam = IncludeLaunchDescription(
     #         PythonLaunchDescriptionSource(os.path.join(
     #             get_package_share_directory('turtlebot3_cartographer'), 'launch', 'cartographer.launch.py')),
@@ -116,52 +109,64 @@ def generate_launch_description():
     #             ('use_sim_time', use_sim_time),
     #         ],
     #         condition=launch.conditions.IfCondition(use_slam))
-    cartographerNode = Node(
-        package='cartographer_ros',
-        executable='cartographer_node',
-        name='cartographer_node',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[
-            '-configuration_directory', cartographer_config_dir,
-            '-configuration_basename', cartographer_config_file,
-        ],
-        condition=launch.conditions.IfCondition(use_slam)
-    )
-
-    cartographerOccupancyNode = Node(
-        package='cartographer_ros',
-        executable='cartographer_occupancy_grid_node',
-        name='cartographer_occupancy_grid_node',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[
-            '-resolution', '0.05',  # adjust map resolution as needed
-        ],
-        condition=launch.conditions.IfCondition(use_slam)
-    )
-
-    # slamLifecycleManagerNode = Node(
-    #     package='nav2_lifecycle_manager',
-    #     executable='lifecycle_manager',
-    #     name='lifecycle_manager_slam',
+    # cartographerNode = Node(
+    #     package='cartographer_ros',
+    #     executable='cartographer_node',
+    #     name='cartographer_node',
     #     output='screen',
-    #     parameters=[{
-    #         'use_sim_time': use_sim_time,
-    #         'autostart': True,
-    #         'node_names': ['slam_toolbox']
-    #     }],
-    #     condition=launch.conditions.IfCondition(use_slam)
-    # )
-    # rvizNode = Node(
-    #     package='rviz2',
-    #     executable='rviz2',
-    #     name='rviz2',
-    #     output='screen',
-    #     arguments=['-d', rvizConfigFile],
     #     parameters=[{'use_sim_time': use_sim_time}],
+    #     arguments=[
+    #         '-configuration_directory', cartographer_config_dir,
+    #         '-configuration_basename', cartographer_config_file,
+    #     ],
     #     condition=launch.conditions.IfCondition(use_slam)
     # )
+
+    # cartographerOccupancyNode = Node(
+    #     package='cartographer_ros',
+    #     executable='cartographer_occupancy_grid_node',
+    #     name='cartographer_occupancy_grid_node',
+    #     output='screen',
+    #     parameters=[{'use_sim_time': use_sim_time}],
+    #     arguments=[
+    #         '-resolution', '0.05',  # adjust map resolution as needed
+    #     ],
+    #     condition=launch.conditions.IfCondition(use_slam)
+    # )
+
+    slamLifecycleManagerNode = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_slam',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'autostart': True,
+            'node_names': ['slam_toolbox']
+        }],
+        condition=launch.conditions.IfCondition(use_slam)
+    )
+    rvizNode = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', rvizConfigFile],
+        parameters=[{'use_sim_time': use_sim_time}],
+        condition=launch.conditions.IfCondition(use_slam)
+    )
+
+    groundTruthOdomNode = Node(
+        package='isfr_bot_webots',
+        executable='ground_truth_odom',
+        name='ground_truth_odom',
+        output='screen',
+        parameters=[{
+            'use_sim_time': True,
+            'odom_frame': 'odom',
+            'base_link_frame': 'base_link',
+        }],
+    )
 
     # localisationNode = Node(
     #     package='robot_localization',
@@ -174,7 +179,7 @@ def generate_launch_description():
     # Handles spawning the *SpawnerNode nodes after the controller is online
     waitingNodes = WaitForControllerConnection(
         target_driver=webotsControllerNode,
-        nodes_to_start=[diffdriveControllerSpawnerNode, jointStateBroadcasterSpawnerNode, cartographerNode, cartographerOccupancyNode],
+        nodes_to_start=[diffdriveControllerSpawnerNode, jointStateBroadcasterSpawnerNode, slamToolboxNode, slamLifecycleManagerNode, rvizNode],
     )
 
     return LaunchDescription([
@@ -189,6 +194,7 @@ def generate_launch_description():
         # twistStamperNode,
         webotsControllerNode,
         waitingNodes,
+        groundTruthOdomNode,
 
         # kill all ROS nodes if WebotsLauncherNode is exited
         launch.actions.RegisterEventHandler(

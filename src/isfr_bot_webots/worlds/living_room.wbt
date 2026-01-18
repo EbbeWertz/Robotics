@@ -28,6 +28,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/chairs/protos/Chair.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/utensils/protos/Glass.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/appearances/protos/VarnishedPine.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/apartment_structure/protos/DoorLever.proto"
 
 EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/TurtleBot3Waffle.proto"
 
@@ -39,8 +40,8 @@ WorldInfo {
   basicTimeStep 20
 }
 Viewpoint {
-  orientation -0.030671620970365625 0.9969070676410786 0.07235710161633306 1.109408674439798
-  position -2.623339671729218 -0.03565957032525634 19.787275515592732
+  orientation 0.05961984639426024 0.9952015100056314 -0.07758497533953262 1.0596963394312628
+  position 1.8027022743473387 0.7249309600751641 11.067777414951646
   follow "TurtleBot3Burger:lidar_sensor"
 }
 TexturedBackground {
@@ -73,60 +74,70 @@ Floor {
   }
 }
 Chair {
-  translation 8.19 4.02 0
-  rotation 0 0 1 -1.5707953071795862
+  translation 8.19 3.63 0
+  rotation 0 0 -0.9999999999999999 1.5707953071795862
 }
 Chair {
-  translation 9.02 4.02 0
-  rotation 0 0 1 -1.5707953071795862
+  translation 9.14558 4.05368 0
+  rotation 0 0 1 -2.8797953071795863
   name "chair(1)"
 }
 Chair {
-  translation 9.02 2.46 0
-  rotation 0 0 1 1.5708
+  translation 8.93763 2.5968 0
+  rotation 0 0 -1 -1.8326053071795858
   name "chair(2)"
 }
 Chair {
-  translation 8.18 2.46 0
-  rotation 0 0 1 1.5708
+  translation 8.28517 2.67024 0
+  rotation 0 0 -1 -1.5708053071795867
   name "chair(3)"
 }
 Glass {
-  translation 5.26 -0.45 0.3
+  translation 5.259999443140581 -0.4499994432692659 0.2984178895750837
+  rotation -0.7070304287746144 -0.7071831253549423 -3.272250317678034e-08 8.054253901745805e-09
 }
 Glass {
-  translation 5.18 -0.53 0.3
+  translation 5.179999443141535 -0.5299994432702195 0.2984178853812058
+  rotation -0.7070310280561866 -0.7071825262022566 -7.890195280708094e-08 8.0542492720622e-09
   name "glass(1)"
 }
 Glass {
-  translation 5.36 -0.2 0.3
+  translation 5.359999450860652 -0.1999994509875487 0.2983838663343729
+  rotation -0.7070310002389234 -0.7071825540135602 -7.500874479316151e-08 8.049330351008032e-09
   name "glass(2)"
 }
 Glass {
-  translation 5.29 -0.11 0.3
+  translation 5.289999459097491 -0.10999945922248151 0.2983475656161168
+  rotation -0.707030665544536 -0.7071828886360624 -7.13159426862904e-08 8.044621892402246e-09
   name "glass(3)"
 }
 Glass {
-  translation 5.29 0.12 0.3
+  translation 5.289999470936737 0.12000052894100825 0.2982953886087151
+  rotation -0.7070308444261897 -0.7071827097928678 -7.38041733549867e-08 8.038833199876733e-09
   name "glass(4)"
 }
 Glass {
-  translation 5.32 0.22 0.3
+  translation 5.319999474539621 0.22000052533895076 0.29827951022263804
+  rotation -0.7070306487010783 -0.7071829054758964 -3.8314576290619797e-08 8.037295434504082e-09
   name "glass(5)"
 }
 BeerBottle {
-  translation 5.3 -0.79 0.3
+  translation 5.299999945328401 -0.7899999453410216 0.299977493986243
+  rotation -0.7070286882643019 -0.7071848654851576 -1.6956454667041256e-09 1.3588073786897094e-07
 }
 BeerBottle {
-  translation 5.24 -0.66 0.3
+  translation 5.239999064034737 -0.6599990642509694 0.2999343713500391
+  rotation -0.7070261017858157 -0.707187451382979 -3.342660325153004e-10 6.676025058453359e-07
   name "beer bottle(1)"
 }
 BeerBottle {
-  translation 5.25 -0.34 0.3
+  translation 5.249999079995505 -0.3399990802080474 0.2998640464266506
+  rotation -0.7070258666788285 -0.7071876864362469 -3.559253663854348e-10 6.648596960798377e-07
   name "beer bottle(2)"
 }
 BeerBottle {
-  translation 5.3 -0.01 0.3
+  translation 5.299999094411045 -0.009999094620270196 0.29980052928425405
+  rotation -0.7070259123195971 -0.7071876408059189 -1.9568290284800152e-10 6.625262813109787e-07
   name "beer bottle(3)"
 }
 Wall {
@@ -160,6 +171,7 @@ Worktop {
   size 2.9 0.6 0.05
 }
 Oven {
+  hidden translation_1 0.25 0 0.19
   translation 5.43 2.59 0
 }
 HotPlate {
@@ -242,7 +254,8 @@ Radiator {
 Door {
   translation 5 -1.5 0
   rotation -0.581329088895979 0.5726190875640585 -0.5780690883974646 0.000396075
-  position -1.5000000005630203
+  canBeOpen FALSE
+  position -1.552511529488314
   wallAppearance Roughcast {
     textureTransform TextureTransform {
       scale 7 2.4
@@ -253,8 +266,20 @@ Door {
       scale 1 2.4
     }
   }
+  doorHandle DoorLever {
+    translation 1.557227236048675e-09 1.5812762210742903e-09 -6.866877247935221e-06
+    rotation 0.4082981244462382 -0.8164965788999349 0.4081984544536967 6.639355268005221e-20
+  }
 }
 Cabinet {
+  hidden translation_7 -0.0019603364987543564 -9.65581010786698e-06 0
+  hidden rotation_7 0 0 1 0.009851096510679013
+  hidden translation_11 -0.0013218813222741128 5.165228819964396e-06 0
+  hidden rotation_11 0 0 -1 0.00781492626424484
+  hidden translation_15 -0.010000004101211971 0 0
+  hidden translation_23 -0.010000004101211971 0 0
+  hidden translation_31 -0.010000004101211971 0 0
+  hidden translation_39 -0.010000008534951145 0 0
   translation 9.97959 -3.84 0.000197256
   rotation 0.00011300299708654554 0.00011407199705898447 0.999999987108951 3.14137
 }
@@ -278,8 +303,12 @@ CardboardBox {
   name "cardboard box(3)"
 }
 Fridge {
+  hidden translation_1 0.36 0.34 1.55
+  hidden rotation_1 0 0 1 0.10504675810345421
+  hidden translation_2 0.36 0.34 0.65
+  hidden rotation_2 0 0 1 0.10577511928212079
   translation 5.52 4.63 4.32035e-05
-  rotation 0.5822796992968663 -0.5748877031142695 0.5748517031328608 -0.0003953071795859131
+  rotation 0.582263107424933 -0.5748721060613264 0.5748841060635403 -0.0003953071795859131
 }
 FloorLight {
   translation 8.84 1 0
@@ -290,11 +319,11 @@ FloorLight {
   pointLightCastShadows TRUE
 }
 Sofa {
-  translation 7.69938 -2.24768 0.000376949
-  rotation 0.00014493699695534708 -0.00014493699695534708 0.9999999789932665 -1.5710753071795862
+  translation 7.69937 -2.01768 -0.049623
+  rotation -0.00014493699695534708 0.00014493699695534708 -0.9999999789932665 1.57108
 }
 Armchair {
-  translation 5.61898 -3.41971 0.00146852
+  translation 5.61898 -3.41971 -0.0685315
   rotation -0.57625118446783 0.57625118446783 -0.5795421855213356 0.000395069
 }
 PottedTree {
@@ -307,7 +336,7 @@ PottedTree {
   name "potted tree(3)"
 }
 Table {
-  translation 7.7008 -3.77 0.00073745
+  translation 7.7008 -3.54 0.000685263
   rotation -0.573823990568342 -0.573823990568342 0.5843389903955123 0.000395388
   size 1.3 0.8 0.5
   feetSize 0.2 0.2
@@ -367,5 +396,6 @@ BunchOfSunFlowers {
   rotation 0 0 1 1.5708
 }
 RubberDuck {
-  translation 7.62 -3.49 0.62
+  translation 7.61997115035616 -3.489969913841764 0.5211168606796412
+  rotation -0.707162513021689 -0.7070510427222826 5.6233286556535684e-05 0.00032120696941649905
 }
