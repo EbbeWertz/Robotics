@@ -1,7 +1,7 @@
-image: living_room_map.pgm
+image: map.pgm
 mode: trinary
 resolution: 0.040
-origin: [4.922, -5.191, 0]
+origin: [-1.474, -5.314, 0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196

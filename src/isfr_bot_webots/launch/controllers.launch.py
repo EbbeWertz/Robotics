@@ -37,9 +37,16 @@ def generate_launch_description():
         }],
     )
 
+    twist_stamper = Node(
+        package='isfr_bot_webots',
+        executable='twist_stamper',
+        output='screen'
+    )
+
 
     return LaunchDescription([
         diffdriveControllerSpawnerNode,
         jointStateBroadcasterSpawnerNode,
         groundTruthOdomNode,
+        twist_stamper,
     ])

@@ -16,6 +16,8 @@ class GroundTruthOdomPublisher(Node):
     def __init__(self):
         super().__init__('ground_truth_odom')
 
+        self.origin_captured = False
+
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('base_link_frame', 'base_link')
 
@@ -72,6 +74,11 @@ class GroundTruthOdomPublisher(Node):
     def publish_odom(self):
         if self.position is None or self.imu_msg is None:
             return
+        
+        if not self.origin_captured:
+            self.odom_origin = self.position
+            self.origin_captured = True
+
 
         now = self.get_clock().now().to_msg()
 
@@ -82,8 +89,8 @@ class GroundTruthOdomPublisher(Node):
         odom.child_frame_id = self.base_link_frame
 
         # Position (ground truth from GPS)
-        odom.pose.pose.position.x = self.position.x
-        odom.pose.pose.position.y = self.position.y
+        odom.pose.pose.position.x = self.position.x - self.odom_origin.x
+        odom.pose.pose.position.y = self.position.y - self.odom_origin.y
         odom.pose.pose.position.z = 0.0  # planar robot
 
         # Orientation (ground truth from IMU)
@@ -110,8 +117,8 @@ class GroundTruthOdomPublisher(Node):
         t.header.frame_id = self.odom_frame
         t.child_frame_id = self.base_link_frame
 
-        t.transform.translation.x = self.position.x
-        t.transform.translation.y = self.position.y
+        t.transform.translation.x = self.position.x - self.odom_origin.x
+        t.transform.translation.y = self.position.y - self.odom_origin.y
         t.transform.translation.z = 0.0
         t.transform.rotation = self.imu_msg.orientation
 
