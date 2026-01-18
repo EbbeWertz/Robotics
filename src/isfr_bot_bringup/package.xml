@@ -13,6 +13,7 @@
   <depend>launch_ros</depend>
   <depend>isfr_bot_webots</depend>
   <depend>isfr_bot_description</depend>
+  <depend>isfr_bot_vision</depend>
   <depend>robot_state_publisher</depend>
 
   <test_depend>ament_lint_auto</test_depend>

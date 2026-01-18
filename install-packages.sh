@@ -8,3 +8,7 @@ sudo apt install ros-jazzy-open-manipulator-moveit-config
 sudo apt install ros-jazzy-open-manipulator-bringup
 sudo apt install ros-jazzy-xacro
 sudo apt install ros-jazzy-nav2-bringup
+sudo apt install ros-jazzy-cv-bridge ros-jazzy-vision-opencv python3-opencv
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu --break-system-packages
+pip install ultralytics --break-system-packages
+pip install "numpy<2.0" --break-system-packages

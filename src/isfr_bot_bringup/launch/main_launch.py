@@ -56,9 +56,17 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster"],
         output="screen",
     )
+    
+    yolo_node = Node(
+        package='isfr_bot_vision',
+        executable='yolo_detector', # Naam uit je setup.py entry_point
+        name='yolo_detector',
+        output='screen'
+    )
 
     return LaunchDescription([
         webots_launch,
+        yolo_node,
         # rsp_node,
         # diffdrive_spawner,
         # jointstate_spawner
