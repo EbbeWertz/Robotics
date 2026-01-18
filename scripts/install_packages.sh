@@ -1,3 +1,5 @@
+cd ..
+
 sudo apt update
 sudo apt install ros-jazzy-webots-ros2
 sudo apt install ros-jazzy-turtlebot3-description

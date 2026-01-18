@@ -23,7 +23,7 @@ def generate_launch_description():
     urdf_file = os.path.join(
         description_pkg,
         'urdf',
-        'isfr_bot.urdf'
+        'IsfrFullRobot.urdf'
     )
 
     robot_description = ParameterValue(

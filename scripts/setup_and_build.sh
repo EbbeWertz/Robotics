@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd ..
+
 echo "oude build shit verwijderen..."
 rm -rf build/ install/ log/
 echo "global ros environment laden..."
