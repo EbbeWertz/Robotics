@@ -36,20 +36,20 @@ WorldInfo {
   info [
     "Simple TurtleBot3 Burger simulation that can be controlled by a ROS."
   ]
-  title "ROS2 simulation of the TurtleBot3 Burger robot"
+  title "ROS2 simulation of the IsfrFullRobot Burger robot"
   basicTimeStep 20
 }
 Viewpoint {
   orientation 0.05961984639426024 0.9952015100056314 -0.07758497533953262 1.0596963394312628
   position 1.8027022743473387 0.7249309600751641 11.067777414951646
-  follow "TurtleBot3Burger:lidar_sensor"
+  follow "IsfrFullRobot:lidar_sensor"
 }
 TexturedBackground {
   texture "empty_office"
   skybox FALSE
 }
 TurtleBot3Waffle {
-  translation 6.36 0 0.1
+  translation 6.36 0 0.0097
   controller "<extern>"
 }
 PottedTree {

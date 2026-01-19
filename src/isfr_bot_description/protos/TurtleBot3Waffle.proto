@@ -1,7 +1,7 @@
 #VRML_SIM R2023b utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/devices/robotis/protos/RobotisLds01.proto"
-
+EXTERNPROTO "./OpenManipulatorX.proto"
 
 PROTO TurtleBot3Waffle [
   field  SFVec3f     translation     0 0 0
@@ -15,7 +15,7 @@ PROTO TurtleBot3Waffle [
   field  SFBool      selfCollision   FALSE
 ]
 {
-  DEF WAFFLE Robot {
+Robot {
     translation IS translation
     rotation IS rotation
     controller IS controller
@@ -80,7 +80,15 @@ PROTO TurtleBot3Waffle [
           }
         ]
       }
-      
+      Transform {
+        translation -0.14 0 0.09   # adjust if needed
+        rotation 0 0 1 0              # rotate if the arm faces the wrong direction
+        children [
+          OpenManipulatorX {
+            name "open_manipulator"
+          }
+        ]
+      }
       # --- IMU SENSORS---
       Accelerometer {
         name "accelerometer_sensor"
