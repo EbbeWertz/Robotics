@@ -32,5 +32,5 @@ def generate_launch_description():
         start_immediately_nodes = [],
         # Voeg hier 'vision_launcher' toe aan de lijst
         start_after_webots_init_nodes = [webots_controllers_launcher, vision_launcher],
-        controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel')]
+        controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped')]
     )

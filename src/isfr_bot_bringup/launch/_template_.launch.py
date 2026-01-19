@@ -31,7 +31,7 @@ def generate_launch_description():
     return generate_webots_launch_description(
         start_immediately_nodes = [],
         start_after_webots_init_nodes = [webots_controllers_launcher, _andere_launcher_],
-        controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel')]
+        controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped')]
     )
     
 
