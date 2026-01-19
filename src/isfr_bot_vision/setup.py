@@ -25,7 +25,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'detector = isfr_bot_vision.detector:main',
+            'detector = isfr_bot_vision.3d_yolo_detector:main',
+            'marker_publisher = isfr_bot_vision.marker_publisher:main'
         ],
     },
 )

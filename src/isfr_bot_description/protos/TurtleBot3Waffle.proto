@@ -57,6 +57,14 @@ PROTO TurtleBot3Waffle [
                 near 0.1
                 far 10.0
               }
+              RangeFinder {
+                name "depth_sensor"
+                width 640
+                height 480
+                fieldOfView 1.047
+                minRange 0.1
+                maxRange 10.0
+              }
             ]
           }
         ]

@@ -24,6 +24,15 @@
       </ros>
     </device>
 
+    <device reference="depth_sensor" type="RangeFinder">
+      <ros>
+        <enabled>true</enabled>
+        <updateRate>30</updateRate>
+        <topicName>/isfr/camera_sensor/depth</topicName>
+        <frameName>camera_link</frameName>
+      </ros>
+    </device>
+
     <!-- IMU -->
     <plugin type="webots_ros2_driver::Ros2IMU">
       <enabled>true</enabled>
