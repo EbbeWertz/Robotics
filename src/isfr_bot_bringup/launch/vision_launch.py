@@ -9,7 +9,7 @@ from isfr_bot_webots.launcher_scaffold import generate_webots_launch_description
 ############################################################
 ############################################################
 ###
-###     Deze launcher launcht de camera op de robot met de yolo image recognition
+###     Deze launcher launcht webots met vision recognition:
 ###
 ############################################################
 ############################################################

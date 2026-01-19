@@ -51,7 +51,7 @@ PROTO TurtleBot3Waffle [
             children [
               Camera {
                 name "camera_sensor" 
-                fieldOfView 1.047
+                fieldOfView 1.57
                 width 640
                 height 480
                 near 0.1
