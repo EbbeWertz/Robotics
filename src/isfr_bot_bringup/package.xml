@@ -15,7 +15,7 @@
   <depend>isfr_bot_description</depend>
   <depend>isfr_bot_vision</depend>
   <depend>robot_state_publisher</depend>
-
+  <depend>isfr_bot_security</depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
