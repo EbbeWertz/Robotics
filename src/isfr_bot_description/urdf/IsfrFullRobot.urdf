@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="TurtleBot3Waffle">
+<robot name="IsfrFullRobot">
 
   <!-- ================= WEBOTS EXTENSIONS ================= -->
   <webots>

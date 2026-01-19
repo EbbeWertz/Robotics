@@ -30,7 +30,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/appearances/protos/VarnishedPine.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/objects/apartment_structure/protos/DoorLever.proto"
 
-EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/TurtleBot3Waffle.proto"
+EXTERNPROTO "../../../../isfr_bot_description/share/isfr_bot_description/protos/IsfrFullRobot.proto"
 
 WorldInfo {
   info [
@@ -48,7 +48,7 @@ TexturedBackground {
   texture "empty_office"
   skybox FALSE
 }
-TurtleBot3Waffle {
+IsfrFullRobot {
   translation 6.36 0 0.1
   controller "<extern>"
 }

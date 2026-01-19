@@ -29,7 +29,7 @@ Over de packages:
 # Wat doen?
 
 ## 1Ste keer:
- - run `bash ./scripts/install-pacakges.sh`
+ - run `bash ./scripts/install_pacakges.sh`
  - check of alle pacakges er zijn met:
    - run `ros2 pkg list | grep turtlebot3` en je moet zien: turtlebot3_*
       - *_bringup
