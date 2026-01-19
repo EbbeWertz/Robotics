@@ -2,6 +2,7 @@
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/develop/projects/devices/robotis/protos/RobotisLds01.proto"
 EXTERNPROTO "./OpenManipulatorX.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/toys/protos/RubberDuck.proto"
 
 PROTO TurtleBot3Waffle [
   field  SFVec3f     translation     0 0 0
@@ -125,6 +126,7 @@ Robot {
           physics Physics {
             density -1
             mass 0.0285
+            friction 5.0
           }
           children [
              Transform {
@@ -172,6 +174,7 @@ Robot {
           physics Physics {
             density -1
             mass 0.0285
+            friction 5.0
           }
           children [
              Transform {
@@ -195,14 +198,28 @@ Robot {
       Solid {
         translation -0.177 -0.064 -0.004
         name "caster_back_right_link"
-        boundingObject Box { size 0.03 0.009 0.02 }
+        boundingObject Box { size 0.03 0.009 0.015 }
         physics Physics { mass 0.005 }
       }
       Solid {
         translation -0.177 0.064 -0.004
         name "caster_back_left_link"
-        boundingObject Box { size 0.03 0.009 0.02 }
+        boundingObject Box { size 0.03 0.009 0.015 }
         physics Physics { mass 0.005 }
+      }
+      RubberDuck {
+        translation -0.15 -0.1 0.1
+        rotation 0 0 1 -0.5
+        name "obese duck counterweight R"
+        scale 0.3
+        density 19254 # Tungsten metal density
+      }
+      RubberDuck {
+        translation -0.15 0.1 0.1
+        rotation 0 0 1 0.5
+        name "obese duck counterweight L"
+        scale 0.3
+        density 19254 # Tungsten metal density
       }
     ]
     name IS name
