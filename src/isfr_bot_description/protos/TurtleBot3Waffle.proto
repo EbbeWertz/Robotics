@@ -80,14 +80,9 @@ Robot {
           }
         ]
       }
-      Transform {
-        translation -0.14 0 0.09   # adjust if needed
-        rotation 0 0 1 0              # rotate if the arm faces the wrong direction
-        children [
-          OpenManipulatorX {
-            name "open_manipulator"
-          }
-        ]
+      OpenManipulatorX {
+        translation -0.14 0 0.09
+        rotation 0 0 1 0
       }
       # --- IMU SENSORS---
       Accelerometer {

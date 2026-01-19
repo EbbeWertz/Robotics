@@ -22,7 +22,14 @@ def generate_launch_description():
         executable='spawner',
         output='screen',
         prefix=controller_manager_prefix,
-        arguments=['joint_state_broadcaster'] + controller_manager_timeout,
+        arguments=['joint_state_broadcaster'] + controller_manager_timeout
+    )
+    gripperControllerSpawnerNode = Node(
+        package='controller_manager',
+        executable='spawner',
+        output='screen',
+        prefix=controller_manager_prefix,
+        arguments=['gripper_left_controller', 'gripper_right_controller'] + controller_manager_timeout
     )
 
     groundTruthOdomNode = Node(
@@ -34,7 +41,7 @@ def generate_launch_description():
             'use_sim_time': True,
             'odom_frame': 'odom',
             'base_link_frame': 'base_link',
-        }],
+        }]
     )
 
     twist_stamper = Node(
@@ -47,6 +54,7 @@ def generate_launch_description():
     return LaunchDescription([
         diffdriveControllerSpawnerNode,
         jointStateBroadcasterSpawnerNode,
+        gripperControllerSpawnerNode,
         groundTruthOdomNode,
         twist_stamper,
     ])

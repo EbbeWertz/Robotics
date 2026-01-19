@@ -65,6 +65,14 @@
       <state_interface name="position"/>
       <command_interface name="velocity"/>
     </joint>
+    <joint name="gripper_left_joint_motor">
+      <state_interface name="position"/>
+      <command_interface name="position"/>
+    </joint>
+    <joint name="gripper_right_joint_motor">
+      <state_interface name="position"/>
+      <command_interface name="position"/>
+    </joint>
   </ros2_control>
 
 </robot>
