@@ -15,7 +15,7 @@ def generate_webots_launch_description(start_immediately_nodes, start_after_webo
     # ARGUMENTS
     world = LaunchConfiguration('world', default='living_room.wbt')
 
-    proto_robot_name = "TurtleBot3Waffle"
+    proto_robot_name = "IsfrFullRobot"
 
     # PATHS
     isfr_bot_webots_package = get_package_share_directory('isfr_bot_webots')

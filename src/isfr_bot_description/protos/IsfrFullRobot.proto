@@ -7,7 +7,7 @@ PROTO IsfrFullRobot [
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
   field SFString name "IsfrFullRobot"
-  field SFString controller "webots_ros2_driver"
+  field SFString controller "<generic>"
   field MFString controllerArgs []
   field SFString customData ""
   field SFBool supervisor FALSE
