@@ -47,12 +47,12 @@ Robot {
             # sub-devices = {name}_main_motor, {name}_secondary_motor
           }
           Transform {
-            translation 0.15 0 0 
+            translation 0.15 0 0.05
             rotation 0 0 1 0 
             children [
               Camera {
                 name "camera_sensor" 
-                fieldOfView 1.57
+                fieldOfView 1.57 # = 90deg = wide angle
                 width 640
                 height 480
                 near 0.1
@@ -62,9 +62,9 @@ Robot {
                 name "depth_sensor"
                 width 640
                 height 480
-                fieldOfView 1.047
+                fieldOfView 1.57 # = 90deg = wide angle
                 minRange 0.1
-                maxRange 10.0
+                maxRange 3.5
               }
             ]
           }

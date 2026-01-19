@@ -10,7 +10,7 @@ from ultralytics import YOLO
 CAMERA_PARAMS = {
     "width": 640,
     "height": 480,
-    "FOV": 1.047
+    "FOV": 1.57
 }
 
 class YoloDetector(Node):
