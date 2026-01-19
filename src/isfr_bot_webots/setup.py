@@ -35,7 +35,7 @@ setup(
         'console_scripts': [
             'launch.frontend.launch_extension = launch_ros.launch.frontend.launch_extension',
             'ground_truth_odom = isfr_bot_webots.ground_truth_odom_publisher:main',
-            'twist_stamper = webots_ros2_turtlebot.twist_stamper:main'
+            'twist_stamper = isfr_bot_webots.twist_stamper:main'
         ],
     },
 )
