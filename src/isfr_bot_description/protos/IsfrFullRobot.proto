@@ -27,16 +27,50 @@ PROTO IsfrFullRobot [
     selfCollision IS selfCollision
 
     children [
+      # 1. De Waffle Base
       turtlebot3_waffle_solid {
         name "turtlebot3_waffle"
       }
+
+      # 2. De Manipulator Arm (achterop)
       Transform {
         translation -0.14 0 0.1
         children [
           openmanipulator_x_solid {
-            name "open_manipulator_x" # match URDF name 
+            name "open_manipulator_x" 
           } 
         ] 
+      }
+
+      # 3. NIEUW: De Camera (voorop)
+      Transform {
+        # Positie: 0.1m naar voren (x), 0.2m hoog (z)
+        translation 0.1 0 0.2 
+        # Rotatie: Standaard kijkt Webots camera langs +X as (vooruit)
+        rotation 0 0 1 0 
+        children [
+          Camera {
+            # BELANGRIJK: Deze naam wordt deel van je topic: /isfr_bot/camera_sensor/image_raw
+            name "camera_sensor" 
+            fieldOfView 1.047  # 60 graden kijkhoek
+            width 640          # Resolutie breedte
+            height 480         # Resolutie hoogte
+            near 0.1           # Ziet niets dichterbij dan 10cm
+            far 10.0           # Ziet niets verder dan 10m
+          }
+          
+          # Visueel blokje zodat je ziet waar de camera zit (zwart doosje)
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.1 0.1 0.1
+              metalness 0.5
+              roughness 0.5
+            }
+            geometry Box {
+              size 0.02 0.05 0.02
+            }
+          }
+        ]
       }
     ]
   }

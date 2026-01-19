@@ -9,8 +9,18 @@
         <enabled>true</enabled>
         <updateRate>5</updateRate>
         <topicName>/scan</topicName>
-        <alwaysOn>false</alwaysOn>
+        <alwaysOn>true</alwaysOn>
         <frameName>lidar_sensor</frameName>
+      </ros>
+    </device>
+
+    <device reference="camera_sensor" type="Camera">
+      <ros>
+        <enabled>true</enabled>
+        <updateRate>30</updateRate>
+        <topicName>/isfr/camera_sensor/image_raw</topicName>
+        <alwaysOn>true</alwaysOn>
+        <frameName>camera_link</frameName>
       </ros>
     </device>
 
@@ -19,7 +29,7 @@
       <enabled>true</enabled>
       <updateRate>20</updateRate>
       <topicName>/imu</topicName>
-      <alwaysOn>false</alwaysOn>
+      <alwaysOn>true</alwaysOn>
       <frameName>imu_link</frameName>
       <inertialUnitName>imu_sensor</inertialUnitName>
       <gyroName>gyro_sensor</gyroName>

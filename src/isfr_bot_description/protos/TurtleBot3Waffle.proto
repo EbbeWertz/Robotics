@@ -45,6 +45,20 @@ PROTO TurtleBot3Waffle [
             enablePhysics FALSE
             # sub-devices = {name}_main_motor, {name}_secondary_motor
           }
+          Transform {
+            translation 0.15 0 0 
+            rotation 0 0 1 0 
+            children [
+              Camera {
+                name "camera_sensor" 
+                fieldOfView 1.047
+                width 640
+                height 480
+                near 0.1
+                far 10.0
+              }
+            ]
+          }
         ]
       }
       # --- BASE visual ---
