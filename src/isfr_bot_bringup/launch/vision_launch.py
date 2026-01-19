@@ -9,7 +9,7 @@ from isfr_bot_webots.launcher_scaffold import generate_webots_launch_description
 ############################################################
 ############################################################
 ###
-###     Deze launcher launcht de camera op de robot met de yolo image recognition
+###     Deze launcher launcht webots met vision recognition:
 ###
 ############################################################
 ############################################################
@@ -32,5 +32,5 @@ def generate_launch_description():
         start_immediately_nodes = [],
         # Voeg hier 'vision_launcher' toe aan de lijst
         start_after_webots_init_nodes = [webots_controllers_launcher, vision_launcher],
-        controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel')]
+        controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped')]
     )

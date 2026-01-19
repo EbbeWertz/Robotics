@@ -2,8 +2,8 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    return LaunchDescription([
-        Node(
+
+    yolo_node = Node(
             package='isfr_bot_vision',
             executable='detector',
             name='yolo_detector',
@@ -15,4 +15,15 @@ def generate_launch_description():
                 ('/camera_info', '/camera/camera_info')
             ]
         )
+    
+    marker_node = Node(
+            package='isfr_bot_vision',
+            executable='marker_publisher',
+            name='vision_marker_publisher',
+            output='screen',
+            parameters=[{'use_sim_time': True}],
+        )
+
+    return LaunchDescription([
+        yolo_node, marker_node
     ])

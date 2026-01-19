@@ -1,3 +1,2 @@
-cd ..
-
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -p use_sim_time:=true
+# ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=false -p use_sim_time:=true
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -p use_sim_time:=true -r /cmd_vel:=/cmd_vel_stamped

@@ -4,7 +4,7 @@ project(isfr_bot_nav)
 find_package(ament_cmake REQUIRED)
 
 # Only install launch files
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}/
 )
 
