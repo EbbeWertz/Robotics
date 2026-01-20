@@ -13,8 +13,8 @@ def generate_launch_description():
     # 3. Start jouw nieuwe Smart Fetcher node
     fetcher_node = Node(
         package='isfr_fetch_skill',
-        executable='smart_fetcher',
-        name='smart_fetcher',
+        executable='main_fetcher',
+        name='main_fetcher',
         output='screen',
         parameters=[{'use_sim_time': True}]
     )

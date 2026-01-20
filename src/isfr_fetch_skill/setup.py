@@ -29,7 +29,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'smart_fetcher = isfr_fetch_skill.smart_fetcher:main',
+            'main_fetcher = isfr_fetch_skill.main_fetcher:main',
         ],
     },
 )
