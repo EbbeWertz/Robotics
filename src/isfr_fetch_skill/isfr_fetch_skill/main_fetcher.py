@@ -4,16 +4,15 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from nav2_msgs.action import NavigateToPose
 from geometry_msgs.msg import PoseStamped, Quaternion
+from rclpy.executors import MultiThreadedExecutor
 
 # Importeer je eigen klasse (zorg dat location_check.py in dezelfde map staat)
-from location_check import LocationChecker
+from .location_check import LocationChecker
 
 class BottleManager(Node):
     def __init__(self):
         super().__init__('bottle_manager')
-        
-        self.getLogger().info("bottle manager gestart!")
-        
+                
         # 1. Initialiseer de Checker
         # We geven 'self' mee zodat de checker onze node kan gebruiken voor subscriptions
         self.checker = LocationChecker(self)
@@ -39,6 +38,10 @@ class BottleManager(Node):
 
     def process_bottles(self):
         if self.is_busy:
+            return
+        
+        if self.checker.latest_costmap is None:
+            self.get_logger().info("⏳ Wachten op Nav2 Costmap... (Navigatie start nog op)", throttle_duration_sec=2.0)
             return
 
         # Stap A: Zoek flessen die we nog moeten doen
@@ -121,13 +124,26 @@ class BottleManager(Node):
         q.z = math.sin(yaw/2); q.w = math.cos(yaw/2)
         return q
 
-def main():
-    print("Starting Bottle Manager Node...")
-    rclpy.init()
-    node = BottleManager()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+def main(args=None):
+    rclpy.init(args=args)
+    
+    try:
+        node = BottleManager()
+        
+        executor = MultiThreadedExecutor()
+        executor.add_node(node)
+
+        print("INFO: Multi-threaded node gestart. Wachten op costmap...")
+        executor.spin()
+        
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if 'node' in locals():
+            node.destroy_node()
+        if 'executor' in locals():
+            executor.shutdown()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

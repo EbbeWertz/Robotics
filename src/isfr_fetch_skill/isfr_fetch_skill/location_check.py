@@ -6,25 +6,31 @@ from nav_msgs.msg import OccupancyGrid
 from tf2_ros import Buffer, TransformListener
 from geometry_msgs.msg import PoseStamped, Quaternion
 
+# Zorg dat deze imports bovenaan staan!
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+
 class LocationChecker:
     def __init__(self, node):
-        """
-        We geven de 'node' mee zodat we via die node kunnen subscriben.
-        """
         self.node = node
         self.latest_costmap = None
         
-        # 1. TF Setup (om robot positie te vinden)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, node)
 
-        # 2. Costmap Subscriber
-        qos_map = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        # --- DE OPLOSSING: QoS AANPASSEN ---
+        # Nav2 Global Costmap gebruikt vaak TRANSIENT_LOCAL.
+        # Als wij dat niet instellen, ontvangen we niks.
+        qos_profile = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL  # <--- DIT IS DE SLEUTEL
+        )
+
         self.costmap_sub = node.create_subscription(
             OccupancyGrid, 
             '/global_costmap/costmap', 
             self.costmap_callback, 
-            qos_map
+            qos_profile  # Gebruik het nieuwe profiel
         )
 
     def costmap_callback(self, msg):
@@ -38,6 +44,8 @@ class LocationChecker:
         if self.latest_costmap is None:
             self.node.get_logger().warn("LocationCheck: Nog geen costmap data!")
             return None
+        else:
+            self.node.get_logger().info("LocationCheck: Costmap data ontvangen.")
 
         # Huidige positie robot ophalen
         try:
