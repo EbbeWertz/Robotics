@@ -12,6 +12,9 @@ controller_manager:
         type: position_controllers/GripperActionController
     gripper_right_controller:
         type: position_controllers/GripperActionController
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
 
 diffdrive_controller:
   ros__parameters:
@@ -46,3 +49,16 @@ gripper_left_controller:
 gripper_right_controller:
     ros__parameters:
       joint: gripper_right_joint_motor
+
+arm_controller:
+  ros__parameters:
+    joints:
+      - arm_orientation_motor
+      - arm_shoulder_motor
+      - arm_elbow_motor
+      - arm_wrist_motor
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+    allow_partial_joints_goal: false

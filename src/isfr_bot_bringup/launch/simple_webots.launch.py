@@ -23,8 +23,14 @@ def generate_launch_description():
         )
     )
 
+    arm_ik_launcher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('isfr_bot_manipulation'), 'launch', 'ik.launch.py')
+        )
+    )
+
     return generate_webots_launch_description(
         start_immediately_nodes = [],
-        start_after_webots_init_nodes = [webots_controllers_launcher],
+        start_after_webots_init_nodes = [webots_controllers_launcher, arm_ik_launcher],
         controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped')]
     )

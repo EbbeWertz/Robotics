@@ -31,6 +31,13 @@ def generate_launch_description():
         prefix=controller_manager_prefix,
         arguments=['gripper_left_controller', 'gripper_right_controller'] + controller_manager_timeout
     )
+    armControllerSpawnerNode = Node(
+        package='controller_manager',
+        executable='spawner',
+        output='screen',
+        prefix=controller_manager_prefix,
+        arguments=['arm_controller'] + controller_manager_timeout
+    )
 
     groundTruthOdomNode = Node(
         package='isfr_bot_webots',
@@ -55,6 +62,7 @@ def generate_launch_description():
         diffdriveControllerSpawnerNode,
         jointStateBroadcasterSpawnerNode,
         gripperControllerSpawnerNode,
+        armControllerSpawnerNode,
         groundTruthOdomNode,
         twist_stamper,
     ])
