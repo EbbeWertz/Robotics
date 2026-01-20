@@ -15,6 +15,7 @@ setup(
         
         # --- VOEG DEZE REGEL TOE ---
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -26,7 +27,8 @@ setup(
     entry_points={
         'console_scripts': [
             'detector = isfr_bot_vision.3d_yolo_detector:main',
-            'marker_publisher = isfr_bot_vision.marker_publisher:main'
+            'marker_publisher = isfr_bot_vision.marker_publisher:main',
+            'object_analyser = isfr_bot_vision.object_analyser:main'
         ],
     },
 )

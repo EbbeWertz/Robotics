@@ -1,0 +1,9 @@
+string label
+float32 xmin
+float32 ymin
+float32 xmax
+float32 ymax
+float32 identity_depth
+float32 x
+float32 y
+float32 z

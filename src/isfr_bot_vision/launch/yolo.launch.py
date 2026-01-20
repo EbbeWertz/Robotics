@@ -16,14 +16,23 @@ def generate_launch_description():
             ]
         )
     
-    marker_node = Node(
+    object_analyser_node = Node(
             package='isfr_bot_vision',
-            executable='marker_publisher',
-            name='vision_marker_publisher',
+            executable='object_analyser',
+            name='object_analyser',
             output='screen',
             parameters=[{'use_sim_time': True}],
         )
+    
+    
+    # marker_node = Node(
+    #         package='isfr_bot_vision',
+    #         executable='marker_publisher',
+    #         name='vision_marker_publisher',
+    #         output='screen',
+    #         parameters=[{'use_sim_time': True}],
+    #     )
 
     return LaunchDescription([
-        yolo_node, marker_node
+        yolo_node, object_analyser_node
     ])
