@@ -18,9 +18,17 @@ def generate_launch_description():
             ]
         )
     
-    # You can add the patrol node here later when we build it
-    # patrol_node = Node( ... )
+    patrol_node = Node(
+        package='isfr_bot_security',
+        executable='patrol_manager',
+        name='patrol_manager',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+        # Remap /cmd_vel if your robot listens on a specific controller topic
+        # remappings=[('/cmd_vel', '/diffdrive_controller/cmd_vel')] 
+    )
 
     return LaunchDescription([
-        depth_sentry_node
+        depth_sentry_node,
+        patrol_node
     ])

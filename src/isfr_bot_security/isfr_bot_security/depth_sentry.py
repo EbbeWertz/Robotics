@@ -73,8 +73,8 @@ class DepthSentry(Node):
             alarm_msg.data = motion_detected
             self.alarm_publisher.publish(alarm_msg)
 
-            if motion_detected:
-                self.get_logger().warn('INTRUDER ALERT: Depth changes detected!')
+            # if motion_detected:
+            #     self.get_logger().warn('INTRUDER ALERT: Depth changes detected!')
 
             # Update previous frame
             self.prev_frame = current_frame
