@@ -20,7 +20,7 @@ class BottleManager(Node):
         
         # Flessen database
         self.bottle_list = [
-            {'id': 1, 'x': 2.5, 'y': -0.5, 'status': 'new'}, 
+            {'id': 1, 'x': 100, 'y': 100, 'status': 'new'}, 
             {'id': 2, 'x': 3.0, 'y': 2.0,  'status': 'new'}, 
             {'id': 3, 'x': 0.0, 'y': 0.0,  'status': 'new'}  
         ]
