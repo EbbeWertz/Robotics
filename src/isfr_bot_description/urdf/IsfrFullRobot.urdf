@@ -73,6 +73,23 @@
       <state_interface name="position"/>
       <command_interface name="position"/>
     </joint>
+    <!-- Arm joints -->
+    <joint name="arm_orientation_motor">
+      <state_interface name="position"/>
+      <command_interface name="position"/>
+    </joint>
+    <joint name="arm_shoulder_motor">
+      <state_interface name="position"/>
+      <command_interface name="position"/>
+    </joint>
+    <joint name="arm_elbow_motor">
+      <state_interface name="position"/>
+      <command_interface name="position"/>
+    </joint>
+    <joint name="arm_wrist_motor">
+      <state_interface name="position"/>
+      <command_interface name="position"/>
+    </joint>
   </ros2_control>
 
 </robot>

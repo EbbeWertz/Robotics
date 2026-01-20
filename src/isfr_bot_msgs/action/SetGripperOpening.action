@@ -1,0 +1,9 @@
+# Goal
+float64 opening  # meters, [-0.011, 0.02]
+---
+# Result
+bool success
+string message
+---
+# Feedback
+float64 current_opening

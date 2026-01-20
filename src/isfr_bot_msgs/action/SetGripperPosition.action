@@ -1,0 +1,12 @@
+# Goal
+float64 x   # meters, relative to arm_base_link
+float64 z   # meters, relative to arm_base_link
+---
+# Result
+bool success
+string message
+---
+# Feedback
+float64 shoulder
+float64 elbow
+float64 wrist

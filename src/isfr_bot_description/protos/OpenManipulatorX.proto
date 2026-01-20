@@ -10,7 +10,7 @@ PROTO OpenManipulatorX [
 ]
 {
   Solid {
-    name "link1"
+    name "arm_base_link"
     translation IS translation
     rotation IS rotation
     children [
@@ -37,14 +37,14 @@ PROTO OpenManipulatorX [
         }
         device [
           RotationalMotor {
-            name "joint1_motor"
+            name "arm_orientation_motor"
             maxVelocity 4.8
             minPosition -3.141592653589793
             maxPosition 3.141592653589793
             maxTorque 1000.0
           }
           PositionSensor {
-            name "joint1_sensor"
+            name "arm_orientation_sensor"
           }
         ]
         endPoint Solid {
@@ -74,14 +74,14 @@ PROTO OpenManipulatorX [
               }
               device [
                 RotationalMotor {
-                  name "joint2_motor"
+                  name "arm_shoulder_motor"
                   maxVelocity 4.8
                   minPosition -1.5
                   maxPosition 1.5
                   maxTorque 1000.0
                 }
                 PositionSensor {
-                  name "joint2_sensor"
+                  name "arm_shoulder_sensor"
                 }
               ]
               endPoint Solid {
@@ -106,14 +106,14 @@ PROTO OpenManipulatorX [
                     }
                     device [
                       RotationalMotor {
-                        name "joint3_motor"
+                        name "arm_elbow_motor"
                         maxVelocity 4.8
                         minPosition -1.5
                         maxPosition 1.4
                         maxTorque 1000.0
                       }
                       PositionSensor {
-                        name "joint3_sensor"
+                        name "arm_elbow_sensor"
                       }
                     ]
                     endPoint Solid {
@@ -138,14 +138,14 @@ PROTO OpenManipulatorX [
                           }
                           device [
                             RotationalMotor {
-                              name "joint4_motor"
+                              name "arm_wrist_motor"
                               maxVelocity 4.8
                               minPosition -1.7
                               maxPosition 1.97
                               maxTorque 1000.0
                             }
                             PositionSensor {
-                              name "joint4_sensor"
+                              name "arm_wrist_sensor"
                             }
                           ]
                           endPoint Solid {
@@ -275,7 +275,7 @@ PROTO OpenManipulatorX [
                                 }
                               }
                             ]
-                            name "link5"
+                            name "arm_wrist_link"
                             physics Physics {
                               density -1
                               mass 0.143276
@@ -288,7 +288,7 @@ PROTO OpenManipulatorX [
                           }
                         }
                       ]
-                      name "link4"
+                      name "arm_elbow_link"
                       physics Physics {
                         density -1
                         mass 0.132746
@@ -301,7 +301,7 @@ PROTO OpenManipulatorX [
                     }
                   }
                 ]
-                name "link3"
+                name "arm_shoulder_link"
                 physics Physics {
                   density -1
                   mass 0.138509
@@ -314,7 +314,7 @@ PROTO OpenManipulatorX [
               }
             }
           ]
-          name "link2"
+          name "arm_orientation_link"
           physics Physics {
             density -1
             mass 0.098407
