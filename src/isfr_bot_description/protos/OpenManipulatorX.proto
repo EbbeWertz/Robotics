@@ -274,6 +274,10 @@ PROTO OpenManipulatorX [
                                   }
                                 }
                               }
+                              Solid {
+                                name "gripper_center_link"
+                                translation 0.1117 0.000000 0.000000
+                              }
                             ]
                             name "arm_wrist_link"
                             physics Physics {
