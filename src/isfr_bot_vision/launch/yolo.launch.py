@@ -34,5 +34,6 @@ def generate_launch_description():
     #     )
 
     return LaunchDescription([
-        yolo_node, object_analyser_node
+        yolo_node, 
+        object_analyser_node
     ])

@@ -1,101 +1,174 @@
 import rclpy
 import math
+import numpy as np
+import cv2
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from rclpy.executors import MultiThreadedExecutor
-from nav2_msgs.action import NavigateToPose
-from geometry_msgs.msg import PoseStamped, Quaternion
-from tf2_ros import Buffer, TransformListener  # <--- NIEUW: Nodig om positie te bepalen
+from rclpy.qos import QoSProfile, DurabilityPolicy # <--- BELANGRIJK VOOR MAPS
 
-# Importeer de klasse uit hetzelfde mapje
+from nav2_msgs.action import NavigateToPose
+from nav_msgs.msg import OccupancyGrid # <--- Nodig voor type hint
+from geometry_msgs.msg import Quaternion
+
+# Zorg dat location_check.py in dezelfde map staat
 from .location_check import LocationChecker
 
 class BottleManager(Node):
     def __init__(self):
-        super().__init__('main_fetcher')
+        super().__init__('bottle_manager')
         
-        # Initialiseer de interne checker (voor costmap checks)
+        # Hulpklasse voor navigatie checks (blijft luisteren naar de echte costmap voor veiligheid)
         self.checker = LocationChecker(self)
-        
-        # --- NIEUW: TF Buffer om eigen positie te bepalen voor afstandsmeting ---
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
-        # ------------------------------------------------------------------------
-
         self._nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
         
-        # Flessen database
-        self.bottle_list = [
-            {'id': 1, 'x': 100, 'y': 100, 'status': 'new'},
-            {'id': 2, 'x': 4.0, 'y': 3.0,  'status': 'new'}, 
-            {'id': 3, 'x': 3.0, 'y': 2.0,  'status': 'new'}  
-        ]
+        # --- NIEUW: Subscriber voor jouw Knowledge Grid ---
+        # De map wordt vaak als 'Transient Local' verstuurd (bewaard bericht), 
+        # dus we moeten de QoS matchen.
+        map_qos = QoSProfile(depth=1)
+        map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+
+        self.create_subscription(
+            OccupancyGrid,
+            '/vision/knowledge_grid', # <--- JOUW CUSTOM MAP TOPIC
+            self.knowledge_map_callback,
+            map_qos
+        )
+        self.latest_knowledge_map = None
+
+        # De lijst begint leeg
+        self.bottle_list = []
+        self.map_scanned = False 
+        self.current_bottle = None
         
-        #TODO: hier moet dan een subscriber komen die de flessen updates binnenkrijgt
+        # Timer loop
+        self.timer = self.create_timer(1.0, self.control_loop)
 
-        self.timer = self.create_timer(2.0, self.process_bottles)
-        self.is_busy = False
+        self.get_logger().info("Bottle Manager gestart. Wachten op Knowledge Grid...")
 
-    def process_bottles(self):
-        # 1. Ben ik al bezig?
-        if self.is_busy: 
+    def knowledge_map_callback(self, msg):
+        """Slaat de map op die uit je YoloDetector komt."""
+        self.latest_knowledge_map = msg
+        # We loggen dit maar 1 keer om spam te voorkomen
+        self.get_logger().info("✅ Knowledge Grid ontvangen!", once=True)
+
+    def control_loop(self):
+        # Als we al bezig zijn, niets doen
+        if self.current_bottle is not None:
             return
 
-        # 2. Heb ik al een kaart?
+        # 1. Wachten op de Knowledge Map (van Yolo) EN de Costmap (van Nav2)
+        if self.latest_knowledge_map is None:
+            self.get_logger().info("⏳ Wachten op /vision/knowledge_grid...", throttle_duration_sec=3.0)
+            return
+        
         if self.checker.latest_costmap is None:
-            self.get_logger().info("⏳ Wachten op Nav2 Costmap...", throttle_duration_sec=2.0)
+            self.get_logger().info("⏳ Wachten op lokale costmap (voor veiligheid)...", throttle_duration_sec=3.0)
             return
 
-        # 3. Zijn er nog flessen?
-        candidates = [b for b in self.bottle_list if b['status'] == 'new']
-        if not candidates:
-            self.get_logger().info("🎉 Alle flessen zijn afgehandeld!")
-            return
-
-        # --- NIEUW: Sorteer op afstand (Dichtstbijzijnde eerst) ---
-        try:
-            # Waar is de robot nu?
-            transform = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
-            rx = transform.transform.translation.x
-            ry = transform.transform.translation.y
+        # 2. SCAN DE KNOWLEDGE MAP (Dit doen we maar 1 keer)
+        if not self.map_scanned:
+            self.get_logger().info("🔍 Knowledge Grid analyseren op zoek naar flessen...")
             
-            # Sorteer functie: Bereken afstand (hypothenusa) voor elke fles
-            # lambda b: math.hypot(b['x'] - rx, b['y'] - ry)
-            candidates.sort(key=lambda b: math.hypot(b['x'] - rx, b['y'] - ry))
+            # Hier roepen we de functie aan met jouw specifieke map
+            found_bottles = self.detect_bottles_from_map(self.latest_knowledge_map)
             
-            self.get_logger().info(f"📏 Lijst gesorteerd! Dichtstbijzijnde is Fles {candidates[0]['id']}")
-            
-        except Exception as e:
-            self.get_logger().warn(f"Kon afstand niet berekenen (TF nog niet klaar), volgorde is willekeurig. Fout: {e}")
-        # ----------------------------------------------------------
-
-        self.get_logger().info(f"Start ronde... {len(candidates)} flessen te gaan.")
-        
-        chosen_approach = None
-        chosen_bottle = None
-
-        # 4. Zoek de eerste bereikbare fles (nu dus de dichtstbijzijnde!)
-        for bottle in candidates:
-            self.get_logger().info(f"Checken van fles {bottle['id']}...")
-            
-            # LET OP: stop_dist=0.75 toegevoegd om de Collision Monitor error te voorkomen!
-            result = self.checker.get_safe_approach_point(bottle['x'], bottle['y'], stop_dist=0.75)
-            
-            if result is not None:
-                goal_x, goal_y, goal_yaw = result
-                self.get_logger().info(f"🚀 Fles {bottle['id']} is bereikbaar! Ga naar [{goal_x:.2f}, {goal_y:.2f}]")
-                chosen_approach = (goal_x, goal_y, goal_yaw)
-                chosen_bottle = bottle
-                break 
+            if found_bottles:
+                self.bottle_list = found_bottles
+                self.get_logger().info(f"✅ {len(found_bottles)} flessen gevonden in de Knowledge Grid!")
+                self.map_scanned = True
             else:
-                self.get_logger().warn(f"❌ Fles {bottle['id']} is dichtbij maar onbereikbaar.")
+                self.get_logger().warn("⚠️ Nog geen flessen in de Knowledge Grid. Ik blijf wachten...")
+                # We zetten scanned NIET op true, zodat hij blijft proberen tot YOLO iets vindt
+                return
+
+        # 3. Normale routine: Filteren op status 'new'
+        candidates = [b for b in self.bottle_list if b['status'] == 'new']
+        
+        if not candidates:
+            self.get_logger().info("🎉 Klaar! Alle detecteerde flessen zijn behandeld.")
+            return
+
+        # 4. Sorteren op afstand (Dichtstbijzijnde eerst)
+        try:
+            # Haal robot positie op
+            tf = self.checker.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
+            rx = tf.transform.translation.x
+            ry = tf.transform.translation.y
+            # Sorteer lijst
+            candidates.sort(key=lambda b: math.hypot(b['x'] - rx, b['y'] - ry))
+        except:
+            pass 
+
+        # 5. Check bereikbaarheid en rijden
+        for bottle in candidates:
+            # We gebruiken de checker om te kijken of we er veilig kunnen komen
+            # (stop_dist = afstand tot fles waar de robot stopt, bijv 0.5 meter)
+            approach = self.checker.get_safe_approach_point(bottle['x'], bottle['y'], stop_dist=0.55)
+            
+            if approach:
+                goal_x, goal_y, goal_yaw = approach
+                self.get_logger().info(f"🚀 Fles {bottle['id']} gevonden op [{bottle['x']:.2f}, {bottle['y']:.2f}]. Rijden maar!")
+                
+                bottle['status'] = 'processing'
+                self.current_bottle = bottle
+                self.send_goal(goal_x, goal_y, goal_yaw)
+                return 
+            else:
+                self.get_logger().warn(f"❌ Kandidaat {bottle['id']} is onbereikbaar (muur/obstakel).")
                 bottle['status'] = 'unreachable'
 
-        # 5. Actie ondernemen
-        if chosen_approach:
-            self.is_busy = True
-            chosen_bottle['status'] = 'processing'
-            self.send_goal(*chosen_approach)
+    def detect_bottles_from_map(self, map_msg):
+        """
+        Converteert de Knowledge Grid naar coördinaten.
+        Omdat jouw YoloDetector hier alleen 0 of 100 in zet, is dit heel makkelijk.
+        """
+        width = map_msg.info.width
+        height = map_msg.info.height
+        resolution = map_msg.info.resolution
+        origin_x = map_msg.info.origin.position.x
+        origin_y = map_msg.info.origin.position.y
+
+        # Data omzetten naar numpy matrix
+        data = np.array(map_msg.data, dtype=np.int8).reshape((height, width))
+
+        # Maak beeld: Alles wat 100 is (fles) wordt wit (255)
+        img = np.zeros((height, width), dtype=np.uint8)
+        img[data >= 90] = 255 
+
+        # Zoek de witte vlekken
+        contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        detected_bottles = []
+        bottle_id_counter = 1
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+
+            # Filter: Is het groot genoeg om een fles te zijn? (kleine ruis negeren)
+            # Aangezien we in YoloDetector 3x3 pixels tekenen (=9 pixels), 
+            # moet de area minstens > 1 zijn.
+            if area > 1.0:
+                M = cv2.moments(cnt)
+                if M["m00"] != 0:
+                    cX = int(M["m10"] / M["m00"]) # Grid X
+                    cY = int(M["m01"] / M["m00"]) # Grid Y
+
+                    # Grid -> World meters
+                    world_x = origin_x + (cX * resolution) + (resolution / 2)
+                    world_y = origin_y + (cY * resolution) + (resolution / 2)
+
+                    detected_bottles.append({
+                        'id': bottle_id_counter,
+                        'x': world_x,
+                        'y': world_y,
+                        'status': 'new'
+                    })
+                    bottle_id_counter += 1
+
+        return detected_bottles
+
+    # --- NAVIGATIE ACTIES ---
 
     def send_goal(self, x, y, yaw):
         goal_msg = NavigateToPose.Goal()
@@ -105,8 +178,6 @@ class BottleManager(Node):
         goal_msg.pose.pose.position.y = y
         goal_msg.pose.pose.orientation = self.yaw_to_quaternion(yaw)
         
-        self.get_logger().info(f"Navigeren naar: x={x:.2f}, y={y:.2f}...")
-        
         self._nav_client.wait_for_server()
         future = self._nav_client.send_goal_async(goal_msg)
         future.add_done_callback(self.goal_response_callback)
@@ -114,28 +185,26 @@ class BottleManager(Node):
     def goal_response_callback(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().error("Nav2 heeft het doel geweigerd!")
-            self.is_busy = False
+            self.get_logger().warn("Doel geweigerd door Nav2.")
+            if self.current_bottle: self.current_bottle['status'] = 'unreachable'
+            self.current_bottle = None
             return
         
-        self.get_logger().info("Doel geaccepteerd, rijden maar...")
+        self.get_logger().info("Doel geaccepteerd, onderweg...")
         goal_handle.get_result_async().add_done_callback(self.result_callback)
 
     def result_callback(self, future):
         result = future.result()
-        if result.status == 4: # SUCCEEDED
-            self.get_logger().info("🎯 Aangekomen bij de fles!")
-            self.update_bottle_status('processing', 'done')
+        # Status 4 = SUCCEEDED
+        if result.status == 4:
+            self.get_logger().info(f"🎯 Aangekomen bij fles {self.current_bottle['id']}!")
+            self.current_bottle['status'] = 'done'
+            # HIER ZOU JE JE ARM-CODE KUNNEN TRIGGEREN
         else:
-            self.get_logger().warn(f"Navigatie mislukt. Status code: {result.status}")
-            self.update_bottle_status('processing', 'failed')
+            self.get_logger().warn("Mislukt om doel te bereiken.")
+            self.current_bottle['status'] = 'failed'
         
-        self.is_busy = False
-
-    def update_bottle_status(self, old_status, new_status):
-        for b in self.bottle_list:
-            if b['status'] == old_status:
-                b['status'] = new_status
+        self.current_bottle = None
 
     def yaw_to_quaternion(self, yaw):
         q = Quaternion()
@@ -145,17 +214,15 @@ class BottleManager(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    node = BottleManager()
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
     try:
-        node = BottleManager()
-        executor = MultiThreadedExecutor()
-        executor.add_node(node)
-        print("INFO: Main Fetcher gestart (Met afstands-sortering).")
         executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
-        if 'executor' in locals(): executor.shutdown()
-        if 'node' in locals(): node.destroy_node()
+        node.destroy_node()
         rclpy.shutdown()
 
 if __name__ == '__main__':
