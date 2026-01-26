@@ -27,9 +27,15 @@ def generate_launch_description():
         )
     )
 
+    nav_launcher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('isfr_bot_nav'), 'launch', 'nav.launch.py')
+        )
+    )
+
     return generate_webots_launch_description(
         start_immediately_nodes = [],
-        start_after_webots_init_nodes = [webots_controllers_launcher, security_launcher],
+        start_after_webots_init_nodes = [webots_controllers_launcher, security_launcher, nav_launcher],
         controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped')]
     )
     

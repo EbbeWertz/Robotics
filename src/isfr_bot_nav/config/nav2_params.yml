@@ -1,11 +1,13 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    alpha1: 0.2
-    alpha2: 0.2
-    alpha3: 0.2
-    alpha4: 0.2
-    alpha5: 0.2
+    alpha1: 0.8    # Zet deze flink hoger (was 0.2). Probeer 0.5 tot 1.0.
+    
+    alpha2: 0.2    # Rotatie-fout door rechtdoor rijden
+    alpha3: 0.2    # Translatie-fout door rechtdoor rijden
+    
+    # alpha4 = Translatie-fout door rotatie (Ook belangrijk bij slippen in bochten)
+    alpha4: 0.5    # Zet deze ook hoger (was 0.2).
     base_frame_id: "base_link"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -31,8 +33,8 @@ amcl:
     sigma_hit: 0.2
     tf_broadcast: true
     transform_tolerance: 1.0
-    update_min_a: 0.2
-    update_min_d: 0.25
+    update_min_d: 0.1     # Was 0.25m. Check elke 10cm rijden.
+    update_min_a: 0.1     # Was 0.2 rad. Check elke kleine draai (ca 6 graden).
     z_hit: 0.5
     z_max: 0.05
     z_rand: 0.5
@@ -60,17 +62,6 @@ bt_navigator:
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
-    
-    # JAZZY FIX: We halen de specifieke bestandsnaam weg. 
-    # De launch file regelt meestal het pad naar de standaard XML.
-    # Als je dit leeg laat, pakt hij een veilige default.
-    # default_bt_xml_filename: "navigate_w_replanning_and_recovery.xml"
-
-    # JAZZY FIX: Verwijder de hele 'plugin_lib_names' lijst.
-    # Nav2 Jazzy laadt automatisch de juiste standaard plugins.
-    # Door ze hier weg te laten, voorkom je typefouten in plugin-namen.
-    
-    # Groot monitoring (optioneel, zet op False als het blijft crashen)
     enable_groot_monitoring: True
     groot_zmq_publisher_port: 1666
     groot_zmq_server_port: 1667
@@ -109,18 +100,25 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.22
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      # --- SNELHEID (Iets lager voor stabiliteit) ---
+      max_vel_x: 0.22
+      max_vel_theta: 0.5     # <--- Zet deze op 0.5 (ipv 1.0)
+      
+      # --- ACCELERATIE (DIT IS DE BELANGRIJKSTE!) ---
+      # Dit bepaalt hoe "agressief" hij start. 
+      # 3.2 is veel te hoog voor Webots (hij slipt).
+      acc_lim_x: 1.0         # <--- Zet deze op 1.0 (ipv 2.5)
+      acc_lim_theta: 0.5     # <--- Zet deze op 0.5 (ipv 3.2)
+      
+      # De vertraging mag ook rustiger
+      decel_lim_x: -1.0      # <--- Zet deze op -1.0
+      decel_lim_theta: -0.5  # <--- Zet deze op -0.5
+      min_speed_theta: 0.0
       min_speed_xy: 0.0
       max_speed_xy: 0.22
-      min_speed_theta: 0.0
-      acc_lim_x: 2.5
       acc_lim_y: 0.0
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
       decel_lim_y: 0.0
-      decel_lim_theta: -3.2
       vx_samples: 20
       vy_samples: 0
       vtheta_samples: 40
@@ -169,13 +167,22 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan
+        # --- AANGEPAST: Voeg bottle_cloud toe ---
+        observation_sources: scan bottle_cloud 
         scan:
           topic: /scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
+        # --- AANGEPAST: Configuratie voor de flessen ---
+        bottle_cloud:
+          topic: /vision/bottle_cloud
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          clearing: False # BELANGRIJK: False, anders verdwijnen ze als je wegkijkt
+          marking: True
+          data_type: "PointCloud2"
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -221,7 +228,8 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan
+        # --- AANGEPAST: Voeg bottle_cloud toe ---
+        observation_sources: scan bottle_cloud
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -232,6 +240,14 @@ global_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
+        # --- AANGEPAST: Configuratie voor de flessen ---
+        bottle_cloud:
+          topic: /vision/bottle_cloud
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          clearing: False # Houd de flessen vast in de map
+          marking: True
+          data_type: "PointCloud2"
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True

@@ -7,7 +7,7 @@
     <device reference="lidar_sensor" type="Lidar">
       <ros>
         <enabled>true</enabled>
-        <updateRate>5</updateRate>
+        <updateRate>20</updateRate>
         <topicName>/scan</topicName>
         <alwaysOn>true</alwaysOn>
         <frameName>lidar_sensor</frameName>
