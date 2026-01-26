@@ -4,11 +4,16 @@ from rclpy.action import ActionClient
 from nav2_msgs.action import NavigateToPose
 from geometry_msgs.msg import PoseStamped, Twist
 from std_msgs.msg import Bool
+from std_srvs.srv import SetBool
 import time
 
 class PatrolManager(Node):
     def __init__(self):
         super().__init__('patrol_manager')
+
+        # --- NIEUW: SERVICE VOOR TOGGLE ---
+        self.patrol_active = False # Standaard staat hij uit
+        self.srv = self.create_service(SetBool, 'toggle_patrol', self.toggle_patrol_callback)
 
         # 1. Action Client for Navigation
         self.nav_to_pose_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
@@ -28,7 +33,6 @@ class PatrolManager(Node):
         # Calculated from your World File:
         # Robot starts at World X=6.36. 
         # We subtract 6.36 from World X to get these numbers.
-        
         self.waypoints = [
             (1.1, 0.0),    # Center of the room (World X=7.5)
             (1.1, 2.0),    # Move Left (World Y=2.0)
@@ -48,7 +52,27 @@ class PatrolManager(Node):
         self.navigation_finished = False
 
         self.timer = self.create_timer(0.1, self.control_loop)
-        self.get_logger().info("Patrol Manager with Nav2 Initialized.")
+        self.get_logger().info("Patrol Manager klaar. Gebruik /toggle_patrol om te starten.")
+
+    def toggle_patrol_callback(self, request, response):
+        self.patrol_active = request.data
+        if self.patrol_active:
+            response.success = True
+            response.message = "Patrouille GESTART."
+            self.get_logger().info("Beveiligingsmodus geactiveerd!")
+        else:
+            self.cancel_nav_goal()
+            response.success = True
+            response.message = "Patrouille GESTOPT."
+            self.get_logger().info("Beveiligingsmodus gedeactiveerd. Robot stopt.")
+        
+        return response
+
+    def cancel_nav_goal(self):
+        """Stopt de robot direct als hij aan het rijden is."""
+        self.nav_to_pose_client.cancel_all_goals()
+        self.navigation_finished = False
+        self.current_state = 'SEND_GOAL'
 
     def alarm_callback(self, msg):
         self.latest_alarm_status = msg.data
@@ -95,6 +119,9 @@ class PatrolManager(Node):
         self.current_waypoint_index = (self.current_waypoint_index + 1) % len(self.waypoints)
 
     def control_loop(self):
+        if not self.patrol_active:
+            return
+            
         current_time = time.time()
         elapsed_time = current_time - self.state_start_time
 
