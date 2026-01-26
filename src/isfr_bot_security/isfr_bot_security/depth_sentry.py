@@ -5,6 +5,7 @@ from std_msgs.msg import Bool
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
+from sensor_msgs.msg import Image
 
 class DepthSentry(Node):
     def __init__(self):
@@ -19,6 +20,9 @@ class DepthSentry(Node):
 
         # 2. Publisher: Alarm signal
         self.alarm_publisher = self.create_publisher(Bool, '/isfr/security/alarm_triggered', 10)
+
+        # Debug publisher for RViz
+        self.mask_publisher = self.create_publisher(Image, '/isfr/security/depth_mask', 10)
 
         self.bridge = CvBridge()
         self.prev_frame = None
@@ -57,6 +61,11 @@ class DepthSentry(Node):
 
             # 4. Clean up noise
             thresh = cv2.dilate(thresh, None, iterations=2)
+
+            # -- PUBLISH MASK TO TOPIC --
+            mask_msg = self.bridge.cv2_to_imgmsg(thresh, encoding="mono8")
+            mask_msg.header = msg.header
+            self.mask_publisher.publish(mask_msg)
 
             # 5. Check for Motion Area
             contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

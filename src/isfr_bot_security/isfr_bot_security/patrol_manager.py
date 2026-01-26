@@ -113,7 +113,7 @@ class PatrolManager(Node):
 
         elif self.current_state == 'SCANNING':
             if self.latest_alarm_status:
-                self.get_logger().warn("!!! INTRUDER DETECTED !!!")
+                self.get_logger().warn("!!! INTRUDER DETECTED !!! 👌")
 
             if elapsed_time > self.scan_duration:
                 self.get_logger().info("Scan clear. Moving to next waypoint.")
