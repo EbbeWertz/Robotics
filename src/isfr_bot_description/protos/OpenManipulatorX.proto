@@ -278,6 +278,55 @@ PROTO OpenManipulatorX [
                                 name "gripper_center_link"
                                 translation 0.1117 0.000000 0.000000
                               }
+                              Transform{
+                                translation 0.05 0 0.05
+                                children [
+                                  Shape {
+                                    appearance Appearance {
+                                      material Material {
+                                        diffuseColor 0.3 0.3 0.3
+                                      }
+                                    }
+                                    isPickable FALSE
+                                    geometry Cylinder {
+                                      height 0.04
+                                      radius 0.01
+                                    }
+                                  }
+                                ]
+                              }
+                              Transform {
+                                translation 0.05 0 0.07
+                                children [
+                                  Camera {
+                                    name "camera_sensor" 
+                                    fieldOfView 1.57 # = 90deg = wide angle
+                                    width 640
+                                    height 480
+                                    near 0.02
+                                    far 10.0
+                                  }
+                                  RangeFinder {
+                                    name "depth_sensor"
+                                    width 640
+                                    height 480
+                                    fieldOfView 1.57 # = 90deg = wide angle
+                                    minRange 0.02
+                                    maxRange 3.5
+                                  }
+                                  Shape {
+                                    appearance Appearance {
+                                      material Material {
+                                        diffuseColor 0 0 0.1
+                                      }
+                                    }
+                                    isPickable FALSE
+                                    geometry Box {
+                                          size 0.03 0.06 0.015
+                                    }
+                                  }
+                                ]
+                              }
                             ]
                             name "arm_wrist_link"
                             physics Physics {
@@ -287,6 +336,36 @@ PROTO OpenManipulatorX [
                               inertiaMatrix [
                                 8.087075e-05 7.598046e-05 9.312735e-05
                                 0.000000e+00 -1.015790e-06 0.000000e+00
+                              ]
+                            }
+                            boundingObject Group{
+                              children [
+                                Pose{
+                                  translation 0.065 0 0.0
+                                  children [
+                                    Box{
+                                      size 0.015 0.12 0.04 # lengte, dikte, hoogte
+                                    }
+                                  ]
+                                }
+                                Pose{
+                                  translation 0.045 0.0 0.01
+                                  children [
+                                    Box{
+                                      size 0.04 0.04 0.06 # lengte, dikte, hoogte
+                                    }
+                                  ]
+                                }
+                                Pose{
+                                  translation 0.0 0.0 0.0
+                                  rotation 1 0 0 1.5708
+                                  children [
+                                    Cylinder{
+                                      radius 0.025
+                                      height 0.04
+                                    }
+                                  ]
+                                }
                               ]
                             }
                           }
@@ -302,6 +381,28 @@ PROTO OpenManipulatorX [
                           -1.276416e-06 -2.687442e-07 1.155955e-08
                         ]
                       }
+                      boundingObject Group{
+                        children [
+                          Pose{
+                            translation 0.063 0.0 0.0
+                            children [
+                              Box{
+                                size 0.07 0.04 0.02 # lengte, dikte, hoogte
+                              }
+                            ]
+                          }
+                          Pose{
+                            translation 0.0 0.0 0.0
+                            rotation 1 0 0 1.5708
+                            children [
+                              Cylinder{
+                                radius 0.025
+                                height 0.04
+                              }
+                            ]
+                          }
+                        ]
+                      }
                     }
                   }
                 ]
@@ -313,6 +414,28 @@ PROTO OpenManipulatorX [
                   inertiaMatrix [
                     3.305538e-04 3.429045e-04 6.034650e-05
                     -9.794098e-08 -3.850571e-05 -1.571752e-06
+                  ]
+                }
+                boundingObject Group{
+                  children [
+                    Pose{
+                      translation 0.0 0.0 0.085
+                      children [
+                        Box{
+                          size 0.02 0.04 0.12 # lengte, dikte, hoogte
+                        }
+                      ]
+                    }
+                    Pose{
+                      translation 0.0 0.0 0.0
+                      rotation 1 0 0 1.5708
+                      children [
+                        Cylinder{
+                          radius 0.025
+                          height 0.04
+                        }
+                      ]
+                    }
                   ]
                 }
               }
