@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'main_fetcher = isfr_fetch_skill.main_fetcher:main',
+            'grip_approach = isfr_fetch_skill.approach_and_grip:main'
         ],
     },
 )

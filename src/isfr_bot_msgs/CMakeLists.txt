@@ -12,6 +12,8 @@ find_package(action_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/YoloVisionObject.msg"
   "msg/YoloVisionObjectArray.msg"
+  "msg/GraspSafeObject.msg"
+  "msg/GraspSafeObjectArray.msg"
   "action/SetGripperOpening.action"
   "action/SetGripperPosition.action"
   DEPENDENCIES std_msgs geometry_msgs
