@@ -29,6 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'object_visualizer = isfr_bot_knowledge.object_visualizer:main',
+            'knowledge_map = isfr_bot_knowledge.knowledge_map:main',
         ],
     },
 )

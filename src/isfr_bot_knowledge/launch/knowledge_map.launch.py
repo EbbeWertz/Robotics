@@ -13,7 +13,16 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': True}],
         )
+    
+    knowledge_map_node = Node(
+        package='isfr_bot_knowledge',
+        executable='knowledge_map',
+        name='knowledge_map',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+    )
 
     return LaunchDescription([
         knowledge_node,
+        knowledge_map_node,
     ])
