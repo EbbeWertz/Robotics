@@ -34,10 +34,11 @@ class PatrolManager(Node):
         # Robot starts at World X=6.36. 
         # We subtract 6.36 from World X to get these numbers.
         self.waypoints = [
-            (1.1, 0.0),    # Center of the room (World X=7.5)
-            (1.1, 2.0),    # Move Left (World Y=2.0)
-            (2.5, 0.0),    # Near the far wall (World X=8.8)
-            (0.0, 0.0)     # Return Home
+            (0.52, 3.71),    # Center of the room (World X=7.5)
+            (0.56, 0.0),    # Move Left (World Y=2.0)
+            (2.01, -0.62),    # Near the far wall (World X=8.8)
+            (-0.37, -1.77),     # Return Home
+            (0.0, 0.0)
         ]
         self.current_waypoint_index = 0
         
