@@ -23,12 +23,19 @@ CAMERA_PARAMS = {
     "center_v": 480//2,
     "FOV": 1.57
 }
-GRIPPER_HOME = (0.25, 0.18)
+GRIPPER_HOME = (0.2, 0.18)
 GRIPPER_OPEN = 0.02
+# alignment
 KP_YAW = 0.005  # Proportional yaw gain
 MAX_YAW_VEL = 0.5 # yaw Rad/s limit
 TOLERANCE_PX = 2 # yaw tolerance
 KP_GRIPPER_Z = 0.002 # Sensitivity for vertical arm movement
+# approachment
+CAMERA_APPROACH_DISTANCE = 0.15
+APPROACH_DISTANCE_THRESH = 0.01
+CAMERA_TO_GRIPPER_OFFSET = (-0.0617, 0.07)
+MAX_FORWARD_VEL = 0.1 # m/s
+KP_FORWARD = 0.5
 
 TARGET_LABEL = "bottle"
 
@@ -93,8 +100,8 @@ class ApproachGrip(Node):
         # state machine
         if self.state == "LOCK_TARGET":
             self.state_lock_target(depth_image, T_base_cam)
-        elif self.state == "TRACK_OBJECT":
-            self.state_track_object(depth_image, T_base_cam)
+        elif self.state in ["ALIGN_OBJECT", "APPROACH_OBJECT"]:
+            self.tracking_states(depth_image, T_base_cam)
     
     # =========================================
     # STATES
@@ -103,6 +110,7 @@ class ApproachGrip(Node):
     def state_wait_for_object(self, msg):
         # Pick object closest to image center
         objects_typed = [o for o in msg.objects if o.label == TARGET_LABEL]
+        if len(objects_typed) == 0: return
         target_obj = min(objects_typed, key=lambda o: abs((o.xmin + o.xmax)/2 - CAMERA_PARAMS['width']/2))
         
         self.get_logger().info(f"Target Selected: {target_obj.label}. Transitioning to LOCK_TARGET.")
@@ -148,7 +156,7 @@ class ApproachGrip(Node):
         else:
             self.get_logger().warn("Lock failed (bad depth or bad box). Retrying...")
 
-    def state_track_object(self, depth_image, T_base_cam):
+    def tracking_states(self, depth_image, T_base_cam):
         # 1. Get Coarse Guess from Odom
         uv_guess = self.odom_tracker.get_projected_pixel(self.current_odom_matrix, T_base_cam)
         
@@ -156,6 +164,7 @@ class ApproachGrip(Node):
         main_debug_img = cv2.cvtColor(main_debug_img, cv2.COLOR_GRAY2BGR)
 
         angular_vel_z = 0.0
+        linear_vel_x = 0.0
 
         if uv_guess:
             u_guess, v_guess = uv_guess
@@ -172,21 +181,12 @@ class ApproachGrip(Node):
                 u_fine, v_fine, (bx, by, bw, bh), refine_info = result
                 rx1, ry1, rx2, ry2 = refine_info["roi_rect"]
 
-                # control logic: rotate around z axis to align u_fine to center
-                error_u = u_fine - CAMERA_PARAMS['center_u']
-                error_v = v_fine - CAMERA_PARAMS['center_v']
-                u_centered = abs(error_u) <= TOLERANCE_PX
-                v_centered = abs(error_v) <= TOLERANCE_PX
-                if not u_centered:
-                    angular_vel_z = -float(error_u) * KP_YAW
-                    angular_vel_z = np.clip(angular_vel_z, -MAX_YAW_VEL, MAX_YAW_VEL)
-                if (not v_centered) and (not self.arm_is_moving):
-                    target_z = self.current_gripper_z - (error_v * KP_GRIPPER_Z)
-                    self.get_logger().info(f"ℹ️ Moving arm z from {self.current_gripper_z} to {target_z}")
-                    self.send_gripper_pos_goal(GRIPPER_HOME[0], target_z)
-                    self.current_gripper_z = target_z
-                if u_centered and v_centered:
-                    self.get_logger().info(f"ℹ️ Robot orientation is centered on object")
+                if self.state in ["ALIGN_OBJECT", "APPROACH_OBJECT"]:
+                    angular_vel_z, target_z, move_arm = self.alignment_control(u_fine, v_fine, angular_vel_z)
+                    if move_arm:
+                        self.send_gripper_pos_goal(GRIPPER_HOME[0], target_z)
+                if self.state == "APPROACH_OBJECT":
+                    linear_vel_x = self.approach_object(depth_image, u_fine, v_fine)
 
                 # 1. Draw only high-level overlays on the main feed
                 cv2.rectangle(main_debug_img, (rx1, ry1), (rx2, ry2), (255, 255, 0), 2) # Cyan ROI
@@ -194,7 +194,6 @@ class ApproachGrip(Node):
                 cv2.rectangle(main_debug_img, (bx, by), (bx+bw, by+bh), (0, 0, 255), 2) # Red Object Box
                 cv2.rectangle(main_debug_img, (CAMERA_PARAMS['center_u'], 0), (CAMERA_PARAMS['center_u'], CAMERA_PARAMS['height']), (255, 0, 0), 1) # Center
                 cv2.rectangle(main_debug_img, (0, CAMERA_PARAMS['center_v']), (CAMERA_PARAMS['width'], CAMERA_PARAMS['center_v']), (255, 0, 0), 1) # Center
-
                 
             else:
                 # Visual tracking lost (maybe occlusion?), fallback to just Green Cross
@@ -206,12 +205,52 @@ class ApproachGrip(Node):
         cmd = TwistStamped()
         cmd.header.stamp = self.get_clock().now().to_msg()
         cmd.twist.angular.z = angular_vel_z
+        cmd.twist.linear.x = linear_vel_x
         self.cmd_pub.publish(cmd)
         self.debug_pub.publish(self.bridge.cv2_to_imgmsg(main_debug_img, 'bgr8'))
+
+    def state_raise_and_reach_gripper(self):
+        target_z = self.current_gripper_z + CAMERA_TO_GRIPPER_OFFSET[1]
+        final_x = GRIPPER_HOME[0] + CAMERA_APPROACH_DISTANCE + CAMERA_TO_GRIPPER_OFFSET[0]
+        self.send_gripper_pos_goal(final_x, target_z)
+        self.current_gripper_z = target_z
 
     # =========================================
     # HELPER
     # =========================================
+
+    def approach_object(self, depth_image, u_fine, v_fine):
+        current_depth = depth_image[v_fine, u_fine]
+        if current_depth <= 0 or np.isnan(current_depth): return
+
+        error_dist = current_depth - CAMERA_APPROACH_DISTANCE
+        if error_dist <= APPROACH_DISTANCE_THRESH:
+            self.get_logger().info("ℹ️ Approach distance reached. Lowering gripper...")
+            cmd = TwistStamped() # stop
+            self.cmd_pub.publish(cmd)
+            self.state = "RAISE_AND_REACH_GRIPPER"
+            self.state_raise_and_reach_gripper()
+        else:
+            return np.clip(error_dist * KP_FORWARD, 0.0, MAX_FORWARD_VEL)
+
+    def alignment_control(self, u_fine, v_fine, angular_vel_z):
+        target_z = -1
+        error_u = u_fine - CAMERA_PARAMS['center_u']
+        error_v = v_fine - CAMERA_PARAMS['center_v']
+        u_centered = abs(error_u) <= TOLERANCE_PX
+        v_centered = abs(error_v) <= TOLERANCE_PX
+        if not u_centered:
+            angular_vel_z = -float(error_u) * KP_YAW
+            angular_vel_z = np.clip(angular_vel_z, -MAX_YAW_VEL, MAX_YAW_VEL)
+        update_target_z = (not v_centered) and (not self.arm_is_moving)
+        if update_target_z:
+            target_z = self.current_gripper_z - (error_v * KP_GRIPPER_Z)
+            self.get_logger().info(f"ℹ️ Moving arm z from {self.current_gripper_z} to {target_z}")
+            self.current_gripper_z = target_z
+        if u_centered and v_centered and (not self.state == "APPROACH_OBJECT"):
+            self.get_logger().info(f"ℹ️ Robot orientation is centered on object. Initiating approach")
+            self.state = "APPROACH_OBJECT"
+        return angular_vel_z, target_z, update_target_z
 
     def send_gripper_opening_goal(self, opening):
         if not self.gripper_opening_client.wait_for_server(timeout_sec=2.0):
@@ -253,7 +292,10 @@ class ApproachGrip(Node):
         self.arm_is_moving = False
         if self.state == "HOME_GRIPPER":
             self.get_logger().info(f"ℹ️ Gripper is home. Starting object tracking...")
-            self.state = "TRACK_OBJECT"
+            self.state = "ALIGN_OBJECT"
+        elif self.state == "RAISE_AND_REACH_GRIPPER":
+            self.get_logger().info(f"ℹ️ Gripper lowered. Initiating final stretch...")
+            self.state = "FINAL_STRETCH"
 
     def gripper_opening_callback(self, _):
         if self.state in ["HOME_GRIPPER", "TRACK_OBJECT"]:
