@@ -5,171 +5,140 @@ import cv2
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.qos import QoSProfile, DurabilityPolicy # <--- BELANGRIJK VOOR MAPS
+from rclpy.qos import QoSProfile, DurabilityPolicy
 
 from nav2_msgs.action import NavigateToPose
-from nav_msgs.msg import OccupancyGrid # <--- Nodig voor type hint
+from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import Quaternion
 
-# Zorg dat location_check.py in dezelfde map staat
 from .location_check import LocationChecker
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+
+map_qos = QoSProfile(
+    depth=1,
+    reliability=ReliabilityPolicy.RELIABLE,
+    history=HistoryPolicy.KEEP_LAST,
+)
+
+
 
 class BottleManager(Node):
     def __init__(self):
         super().__init__('bottle_manager')
-        
-        # Hulpklasse voor navigatie checks (blijft luisteren naar de echte costmap voor veiligheid)
+
+        # === NEW: runtime parameter ===
+        self.declare_parameter('start', False)
+
         self.checker = LocationChecker(self)
         self._nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
-        
-        # --- NIEUW: Subscriber voor jouw Knowledge Grid ---
-        # De map wordt vaak als 'Transient Local' verstuurd (bewaard bericht), 
-        # dus we moeten de QoS matchen.
-        map_qos = QoSProfile(depth=1)
-        map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
 
         self.create_subscription(
             OccupancyGrid,
-            '/vision/knowledge_grid', # <--- JOUW CUSTOM MAP TOPIC
+            '/knowledge/occupancy',
             self.knowledge_map_callback,
             map_qos
         )
+
         self.latest_knowledge_map = None
+        self.current_goal = None
 
-        # De lijst begint leeg
-        self.bottle_list = []
-        self.map_scanned = False 
-        self.current_bottle = None
-        
-        # Timer loop
         self.timer = self.create_timer(1.0, self.control_loop)
-
-        self.get_logger().info("Bottle Manager gestart. Wachten op Knowledge Grid...")
+        self.get_logger().info("Bottle Manager gestart (knowledge-aware).")
 
     def knowledge_map_callback(self, msg):
-        """Slaat de map op die uit je YoloDetector komt."""
         self.latest_knowledge_map = msg
-        # We loggen dit maar 1 keer om spam te voorkomen
-        self.get_logger().info("✅ Knowledge Grid ontvangen!", once=True)
 
+    # ==========================
+    # MAIN CONTROL LOOP
+    # ==========================
     def control_loop(self):
-        # Als we al bezig zijn, niets doen
-        if self.current_bottle is not None:
+        if self.current_goal is not None:
             return
 
-        # 1. Wachten op de Knowledge Map (van Yolo) EN de Costmap (van Nav2)
         if self.latest_knowledge_map is None:
-            self.get_logger().info("⏳ Wachten op /vision/knowledge_grid...", throttle_duration_sec=3.0)
-            return
-        
-        if self.checker.latest_costmap is None:
-            self.get_logger().info("⏳ Wachten op lokale costmap (voor veiligheid)...", throttle_duration_sec=3.0)
+            self.get_logger().info("⏳ Wachten op knowledge grid...", throttle_duration_sec=3.0)
             return
 
-        # 2. SCAN DE KNOWLEDGE MAP (Dit doen we maar 1 keer)
-        if not self.map_scanned:
-            self.get_logger().info("🔍 Knowledge Grid analyseren op zoek naar flessen...")
-            
-            # Hier roepen we de functie aan met jouw specifieke map
-            found_bottles = self.detect_bottles_from_map(self.latest_knowledge_map)
-            
-            if found_bottles:
-                self.bottle_list = found_bottles
-                self.get_logger().info(f"✅ {len(found_bottles)} flessen gevonden in de Knowledge Grid!")
-                self.map_scanned = True
-            else:
-                self.get_logger().warn("⚠️ Nog geen flessen in de Knowledge Grid. Ik blijf wachten...")
-                # We zetten scanned NIET op true, zodat hij blijft proberen tot YOLO iets vindt
-                return
+        start = self.get_parameter('start').value
 
-        # 3. Normale routine: Filteren op status 'new'
-        candidates = [b for b in self.bottle_list if b['status'] == 'new']
-        
-        if not candidates:
-            self.get_logger().info("🎉 Klaar! Alle detecteerde flessen zijn behandeld.")
+        if start:
+            self.get_logger().info("🧠 Knowledge scoring AAN")
+            target = self.select_best_cell_from_grid(self.latest_knowledge_map)
+        else:
+            self.get_logger().info("📍 Knowledge scoring UIT (fallback)")
             return
 
-        # 4. Sorteren op afstand (Dichtstbijzijnde eerst)
-        try:
-            # Haal robot positie op
-            tf = self.checker.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
-            rx = tf.transform.translation.x
-            ry = tf.transform.translation.y
-            # Sorteer lijst
-            candidates.sort(key=lambda b: math.hypot(b['x'] - rx, b['y'] - ry))
-        except:
-            pass 
+        if target is None:
+            self.get_logger().warn("❌ Geen geschikt doel gevonden in knowledge grid.")
+            return
 
-        # 5. Check bereikbaarheid en rijden
-        for bottle in candidates:
-            # We gebruiken de checker om te kijken of we er veilig kunnen komen
-            # (stop_dist = afstand tot fles waar de robot stopt, bijv 0.5 meter)
-            approach = self.checker.get_safe_approach_point(bottle['x'], bottle['y'], stop_dist=0.55)
-            
-            if approach:
-                goal_x, goal_y, goal_yaw = approach
-                self.get_logger().info(f"🚀 Fles {bottle['id']} gevonden op [{bottle['x']:.2f}, {bottle['y']:.2f}]. Rijden maar!")
-                
-                bottle['status'] = 'processing'
-                self.current_bottle = bottle
-                self.send_goal(goal_x, goal_y, goal_yaw)
-                return 
-            else:
-                self.get_logger().warn(f"❌ Kandidaat {bottle['id']} is onbereikbaar (muur/obstakel).")
-                bottle['status'] = 'unreachable'
+        tx, ty = target
+        approach = self.checker.get_safe_approach_point(tx, ty, stop_dist=0.55)
 
-    def detect_bottles_from_map(self, map_msg):
-        """
-        Converteert de Knowledge Grid naar coördinaten.
-        Omdat jouw YoloDetector hier alleen 0 of 100 in zet, is dit heel makkelijk.
-        """
+        if approach:
+            gx, gy, yaw = approach
+            self.current_goal = (gx, gy)
+            self.send_goal(gx, gy, yaw)
+        else:
+            self.get_logger().warn("❌ Doel onbereikbaar volgens costmap.")
+
+    # ==========================
+    # KNOWLEDGE GRID SCORING
+    # ==========================
+    def select_best_cell_from_grid(self, map_msg):
         width = map_msg.info.width
         height = map_msg.info.height
-        resolution = map_msg.info.resolution
-        origin_x = map_msg.info.origin.position.x
-        origin_y = map_msg.info.origin.position.y
+        res = map_msg.info.resolution
+        ox = map_msg.info.origin.position.x
+        oy = map_msg.info.origin.position.y
 
-        # Data omzetten naar numpy matrix
-        data = np.array(map_msg.data, dtype=np.int8).reshape((height, width))
+        data = np.array(map_msg.data).reshape((height, width))
 
-        # Maak beeld: Alles wat 100 is (fles) wordt wit (255)
-        img = np.zeros((height, width), dtype=np.uint8)
-        img[data >= 90] = 255 
+        BEST_THRESHOLD = 30
+        best_score = 0
+        best_cell = None
 
-        # Zoek de witte vlekken
-        contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for y in range(height):
+            for x in range(width):
+                value = data[y, x]
+                if value > BEST_THRESHOLD and value > best_score:
+                    best_score = value
+                    best_cell = (x, y)
 
-        detected_bottles = []
-        bottle_id_counter = 1
+        if best_cell is None:
+            return None
 
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
+        cx, cy = best_cell
+        wx = ox + (cx + 0.5) * res
+        wy = oy + (cy + 0.5) * res
 
-            # Filter: Is het groot genoeg om een fles te zijn? (kleine ruis negeren)
-            # Aangezien we in YoloDetector 3x3 pixels tekenen (=9 pixels), 
-            # moet de area minstens > 1 zijn.
-            if area > 1.0:
-                M = cv2.moments(cnt)
-                if M["m00"] != 0:
-                    cX = int(M["m10"] / M["m00"]) # Grid X
-                    cY = int(M["m01"] / M["m00"]) # Grid Y
+        self.get_logger().info(f"⭐ Beste knowledge cel: score={best_score} @ ({wx:.2f},{wy:.2f})")
+        return wx, wy
 
-                    # Grid -> World meters
-                    world_x = origin_x + (cX * resolution) + (resolution / 2)
-                    world_y = origin_y + (cY * resolution) + (resolution / 2)
+    # ==========================
+    # FALLBACK (simpel)
+    # ==========================
+    def select_first_detected_cell(self, map_msg):
+        data = np.array(map_msg.data)
+        idx = np.argmax(data)
+        if data[idx] < 30:
+            return None
 
-                    detected_bottles.append({
-                        'id': bottle_id_counter,
-                        'x': world_x,
-                        'y': world_y,
-                        'status': 'new'
-                    })
-                    bottle_id_counter += 1
+        w = map_msg.info.width
+        res = map_msg.info.resolution
+        ox = map_msg.info.origin.position.x
+        oy = map_msg.info.origin.position.y
 
-        return detected_bottles
+        y = idx // w
+        x = idx % w
 
-    # --- NAVIGATIE ACTIES ---
+        wx = ox + (x + 0.5) * res
+        wy = oy + (y + 0.5) * res
+        return wx, wy
 
+    # ==========================
+    # NAVIGATION
+    # ==========================
     def send_goal(self, x, y, yaw):
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose.header.frame_id = 'map'
@@ -177,7 +146,7 @@ class BottleManager(Node):
         goal_msg.pose.pose.position.x = x
         goal_msg.pose.pose.position.y = y
         goal_msg.pose.pose.orientation = self.yaw_to_quaternion(yaw)
-        
+
         self._nav_client.wait_for_server()
         future = self._nav_client.send_goal_async(goal_msg)
         future.add_done_callback(self.goal_response_callback)
@@ -185,45 +154,29 @@ class BottleManager(Node):
     def goal_response_callback(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().warn("Doel geweigerd door Nav2.")
-            if self.current_bottle: self.current_bottle['status'] = 'unreachable'
-            self.current_bottle = None
+            self.current_goal = None
             return
-        
-        self.get_logger().info("Doel geaccepteerd, onderweg...")
         goal_handle.get_result_async().add_done_callback(self.result_callback)
 
     def result_callback(self, future):
-        result = future.result()
-        # Status 4 = SUCCEEDED
-        if result.status == 4:
-            self.get_logger().info(f"🎯 Aangekomen bij fles {self.current_bottle['id']}!")
-            self.current_bottle['status'] = 'done'
-            # HIER ZOU JE JE ARM-CODE KUNNEN TRIGGEREN
-        else:
-            self.get_logger().warn("Mislukt om doel te bereiken.")
-            self.current_bottle['status'] = 'failed'
-        
-        self.current_bottle = None
+        self.current_goal = None
 
     def yaw_to_quaternion(self, yaw):
         q = Quaternion()
-        q.z = math.sin(yaw/2)
-        q.w = math.cos(yaw/2)
+        q.z = math.sin(yaw / 2)
+        q.w = math.cos(yaw / 2)
         return q
+
 
 def main(args=None):
     rclpy.init(args=args)
     node = BottleManager()
     executor = MultiThreadedExecutor()
     executor.add_node(node)
-    try:
-        executor.spin()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+    executor.spin()
+    node.destroy_node()
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
