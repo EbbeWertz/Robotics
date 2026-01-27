@@ -22,8 +22,7 @@ def generate_launch_description():
             name='object_analyser',
             output='screen',
             parameters=[{'use_sim_time': True}],
-        )
-    
+        )    
     
     # marker_node = Node(
     #         package='isfr_bot_vision',
@@ -35,5 +34,5 @@ def generate_launch_description():
 
     return LaunchDescription([
         yolo_node, 
-        object_analyser_node
+        object_analyser_node,
     ])
