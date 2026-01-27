@@ -10,7 +10,7 @@ class ObjectVisualizer(Node):
         # Subscriber luistert naar jouw Yolo topic
         self.subscription = self.create_subscription(
             YoloVisionObjectArray,
-            '/webots/objects',  # Check of dit topic klopt
+            '/vision/absolute_position',  # Check of dit topic klopt
             self.listener_callback,
             10)
 
@@ -21,25 +21,20 @@ class ObjectVisualizer(Node):
 
     def listener_callback(self, msg):
         marker_array = MarkerArray()
+        target_frame = "arm_base_link"
 
-        # Omdat jouw bericht geen standaard 'header' heeft met frame_id, 
-        # moeten we er zelf een kiezen. Zorg dat dit frame bestaat in RViz!
-        # Vaak is dit 'map', 'odom' of 'camera_link'.
-        target_frame = "map" 
-
-        # Eerst een marker toevoegen die alle OUDE markers weghaalt (opschonen)
-        # Dit voorkomt dat objecten blijven "hangen" als ze niet meer gezien worden.
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL
         marker_array.markers.append(delete_marker)
 
         # Loop door alle gevonden objecten in de lijst
         for i, obj in enumerate(msg.objects):
+            self.get_logger().info(f'Visualizing object: {obj.label} at ({obj.x}, {obj.y}, {obj.z})')
             
             # --- 1. De Visuele Bol (Positie) ---
             sphere_marker = Marker()
             sphere_marker.header.frame_id = target_frame
-            sphere_marker.header.stamp = self.get_logger().now().to_msg()
+            sphere_marker.header.stamp = self.get_clock().now().to_msg()
             
             sphere_marker.ns = "object_shapes"
             sphere_marker.id = i  # Uniek ID per object
@@ -69,7 +64,7 @@ class ObjectVisualizer(Node):
             # --- 2. Het Label (Tekst boven object) ---
             text_marker = Marker()
             text_marker.header.frame_id = target_frame
-            text_marker.header.stamp = self.get_logger().now().to_msg()
+            text_marker.header.stamp = self.get_clock().now().to_msg()
             
             text_marker.ns = "object_labels"
             text_marker.id = i + 1000 # Zorg voor een unieke ID die niet botst met de bollen

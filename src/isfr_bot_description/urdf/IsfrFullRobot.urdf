@@ -20,7 +20,7 @@
         <updateRate>30</updateRate>
         <topicName>/isfr/camera_sensor/image_raw</topicName>
         <alwaysOn>true</alwaysOn>
-        <frameName>camera_link</frameName>
+        <frameName>arm_wrist_link</frameName>
       </ros>
     </device>
 
