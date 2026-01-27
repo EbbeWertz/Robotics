@@ -12,7 +12,8 @@ import math
 import tf2_ros
 from geometry_msgs.msg import TransformStamped
 
-INTERPOLATION_POINTS_PER_METER = 100 # interpolation step = 1cm
+INTERPOLATION_POINTS_PER_METER = 500 # interpolation step = 1cm
+INTERPOLATION_POINTS_PER_SECOND = 50
 # Joint limits
 JOINT_LIMITS = {
     "arm_orientation_motor": (-math.pi, math.pi),
@@ -256,7 +257,9 @@ class OpenManipulatorIKNode(Node):
             motor_w = self.phi_w_to_motor_angle(phi_w)
             motor_angles.append([0.0, motor_s, motor_e, motor_w])
 
-        self.publish_arm(motor_angles, 1)
+        time = num_of_points / INTERPOLATION_POINTS_PER_SECOND
+        self.publish_arm(motor_angles, time)
+        
         self.get_logger().info(
             "=====================================\n"
             "--> final arm angles...\n"
@@ -265,6 +268,12 @@ class OpenManipulatorIKNode(Node):
             f"wrist: kinematic = {math.degrees(phi_w):.2f} deg, motor = {math.degrees(motor_w):.2f} deg\n"
             "====================================="
         )
+
+        end_time = self.get_clock().now() + rclpy.duration.Duration(seconds=time)
+
+        while self.get_clock().now() < end_time:
+            rclpy.spin_once(self, timeout_sec=0.05)
+
         goal_handle.succeed()
         return SetGripperPosition.Result(success=True)
 
