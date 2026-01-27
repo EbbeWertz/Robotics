@@ -17,6 +17,7 @@ from isfr_bot_webots.launcher_scaffold import generate_webots_launch_description
 def generate_launch_description():
 
     rvizConfigFile = os.path.join(get_package_share_directory('isfr_bot_vision'), 'rviz', 'debug_cameras.rviz')
+    map_file = os.path.join(get_package_share_directory('isfr_bot_nav'),'config', 'map.yaml')
 
     webots_controllers_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -27,7 +28,10 @@ def generate_launch_description():
     vision_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('isfr_bot_vision'), 'launch', 'yolo.launch.py')
-        )
+        ),
+        launch_arguments=[
+            ('map', map_file),
+        ]
     )
     
     nav_launcher = IncludeLaunchDescription(
@@ -48,7 +52,10 @@ def generate_launch_description():
     knowledge_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('isfr_bot_knowledge'), 'launch', 'knowledge_map.launch.py')
-        )
+        ),
+        launch_arguments=[
+            ('map', map_file),
+        ]
     )
     
     return generate_webots_launch_description(
