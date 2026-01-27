@@ -141,9 +141,6 @@ class YoloDetector(Node):
             for box in results[0].boxes:
                 class_id = int(box.cls[0])
                 label = self.model.names[class_id]
-                
-                if label != "bottle":
-                    continue
 
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                 identity_depth = self.get_identity_depth([x1, y1, x2, y2])
@@ -186,7 +183,7 @@ class YoloDetector(Node):
                     
                     abs_array_msg.objects.append(abs_object_msg)
 
-                    self.get_logger().info(f'Detected {label} at REL({x3d:.2f}, {z3d:.2f}) -> ABS({wx:.2f}, {wy:.2f})')
+                    # self.get_logger().info(f'Detected {label} at REL({x3d:.2f}, {z3d:.2f}) -> ABS({wx:.2f}, {wy:.2f})')
 
             # Publish beide
             self.publisher.publish(rel_array_msg)

@@ -1,4 +1,5 @@
 import math
+import time
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -12,8 +13,9 @@ import tf_transformations
 from isfr_bot_msgs.msg import GraspSafeObjectArray
 from .OdomObjectTracker import OdomObjectTracker
 from .DepthTemplateMatcherTracker import DepthTemplateRefiner
-from rclpy.action import ActionClient
-from isfr_bot_msgs.action import SetGripperPosition, SetGripperOpening
+from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
+from isfr_bot_msgs.action import SetGripperPosition, SetGripperOpening, ApproachAndGrabTask
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 
 # --- Configuration ---
 CAMERA_PARAMS = {
@@ -42,8 +44,6 @@ GRASPING_OVERSHOOT_DEPTH = 0.03 # make sure the object rests in the center of th
 LIFT_HEIGHT = 0.01  # 1cm
 DRIVE_BACK_DISTANCE = 0.25
 
-TARGET_LABEL = "bottle"
-
 class ApproachGrip(Node):
     def __init__(self):
         super().__init__('approach_grip')
@@ -53,9 +53,23 @@ class ApproachGrip(Node):
         self.odom_tracker = OdomObjectTracker(CAMERA_PARAMS)
         self.visual_refiner = DepthTemplateRefiner(self, search_margin=0.25)
 
+        # action server:
+        self.action_group = MutuallyExclusiveCallbackGroup()
+        self._action_server = ActionServer(
+            self,
+            ApproachAndGrabTask,
+            'approach_and_grab',
+            execute_callback=self.execute_callback,
+            goal_callback=self.goal_callback,
+            cancel_callback=self.cancel_callback,
+            callback_group=self.action_group
+        )
+
         # --- State Machine ---
-        # States: "WAIT_FOR_OBJECTS" -> "LOCK_TARGET" -> "HOME_GRIPPER" -> "TRACK_OBJECT"
-        self.state = "WAIT_FOR_OBJECTS"
+        self.state = "IDLE"
+        self.target_label = ""
+        self.goal_handle = None
+        self.start_time = None
         self.pending_object_data = None 
         self.current_odom_matrix = None
         self.get_logger().info("ℹ️ Waiting for object candidates to be published")
@@ -82,7 +96,57 @@ class ApproachGrip(Node):
     # CALLBACKS
     # =========================================
 
+    def goal_callback(self, goal_request):
+        if self.state != "IDLE":
+            self.get_logger().warn("Goal rejected: already busy")
+            return GoalResponse.REJECT
+        return GoalResponse.ACCEPT
+    
+    def send_feedback(self, state_str):
+        if self.goal_handle:
+            feedback = ApproachAndGrabTask.Feedback()
+            feedback.state = state_str
+            feedback.stamp = self.get_clock().now().to_msg()
+            self.goal_handle.publish_feedback(feedback)
+
+    def cancel_callback(self, goal_handle):
+        self.get_logger().info("Cancel request received")
+        return CancelResponse.ACCEPT
+    
+    def execute_callback(self, goal_handle):
+        self.goal_handle = goal_handle
+        self.target_label = goal_handle.request.target_label
+        self.start_time = self.get_clock().now()
+        self.stop_tracking = False
+        self.update_state("WAIT_FOR_OBJECTS")
+        self.get_logger().info(f"ℹ️ Starting task for: {self.target_label}")
+
+        loop_rate = self.create_rate(10)
+
+        while rclpy.ok() and self.state != "COMPLETED":
+            if self.goal_handle.is_cancel_requested:
+                return ApproachAndGrabTask.Result(success=False, message="Task canceled")
+
+            # Check for timeout
+            if self.state == "WAIT_FOR_OBJECTS":
+                elapsed = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
+                if elapsed > 15.0:
+                     return ApproachAndGrabTask.Result(success=False, message="Timeout")
+
+            loop_rate.sleep() # Tiny sleep to let other threads/callbacks work
+
+        goal_handle.succeed()
+        result = ApproachAndGrabTask.Result(success=True, message="Object successfully grabbed and retreated.")
+        self.state = "IDLE"
+        return result
+    
+    def update_state(self, new_state):
+        self.state = new_state
+        self.get_logger().info(f"Transitioning to state: {new_state}")
+        self.send_feedback(new_state)
+
     def odom_callback(self, msg):
+        if self.state == "IDLE": return
         q = msg.pose.pose.orientation
         t = msg.pose.pose.position
         T = tf_transformations.quaternion_matrix([q.x, q.y, q.z, q.w])
@@ -97,11 +161,12 @@ class ApproachGrip(Node):
             if dist_moved >= DRIVE_BACK_DISTANCE:
                 self.get_logger().info("✅ 🙌 🥳 🎉 Object pickup has succeeded.")
                 self.stop_robot()
-                self.state = "COMPLETED"
+                self.update_state("COMPLETED")
             else:
                 self.drive_backward_step()
 
     def grasp_objects_callback(self, msg):
+        if self.state == "IDLE": return
         # Only listen if we are waiting for an object
         if self.state != "WAIT_FOR_OBJECTS" or not msg.objects:
             return
@@ -109,6 +174,7 @@ class ApproachGrip(Node):
         self.state_wait_for_object(msg)
 
     def depth_callback(self, msg):
+        if self.state == "IDLE": return
         # get status
         if self.current_odom_matrix is None: return
         T_base_cam = self.get_camera_transform()
@@ -127,7 +193,7 @@ class ApproachGrip(Node):
 
     def state_wait_for_object(self, msg):
         # Pick object closest to image center
-        objects_typed = [o for o in msg.objects if o.label == TARGET_LABEL]
+        objects_typed = [o for o in msg.objects if o.label == self.target_label]
         if len(objects_typed) == 0: return
         target_obj = min(objects_typed, key=lambda o: abs((o.xmin + o.xmax)/2 - CAMERA_PARAMS['width']/2))
         
@@ -136,7 +202,7 @@ class ApproachGrip(Node):
         # Store object data and transition to LOCK state
         # We do NOT track yet, we wait for the next Depth frame to get Z and lock the 3D point.
         self.pending_object_data = target_obj
-        self.state = "LOCK_TARGET"
+        self.update_state("LOCK_TARGET")
 
     def state_lock_target(self, depth_image, T_base_cam):
         self.get_logger().info("ℹ️ Locking target object location")
@@ -167,7 +233,7 @@ class ApproachGrip(Node):
         
         if success_odom and success_vis:
             self.get_logger().info(f"ℹ️ Locked target {obj.label} at [{u:.2f}, {v:.2f}]px, {z:.2f}m. Setting gripper to home...")
-            self.state = "HOME_GRIPPER"
+            self.update_state("HOME_GRIPPER")
             gr_x, gr_z = GRIPPER_HOME
             self.send_gripper_pos_goal(gr_x, gr_z)
             self.send_gripper_opening_goal(GRIPPER_OPEN)
@@ -247,7 +313,7 @@ class ApproachGrip(Node):
         if self.current_odom_matrix is not None:
             self.retreat_start_odom_x = self.current_odom_matrix[0, 3]
             self.retreat_start_odom_y = self.current_odom_matrix[1, 3]
-            self.state = "RETREAT"
+            self.update_state("RETREAT")
             self.get_logger().info("ℹ️ Initialised retreat protocol. Retreating now...")
         else:
             self.get_logger().error("Odom lost! Cannot drive back safely.")
@@ -264,7 +330,7 @@ class ApproachGrip(Node):
         if error_dist <= APPROACH_DISTANCE_THRESH:
             self.get_logger().info("ℹ️ Approach distance reached. Raising gripper...")
             self.stop_robot()
-            self.state = "RAISE_AND_REACH_GRIPPER"
+            self.update_state("RAISE_AND_REACH_GRIPPER")
             self.state_raise_and_reach_gripper()
         else:
             return np.clip(error_dist * KP_FORWARD, 0.0, MAX_FORWARD_VEL)
@@ -285,7 +351,7 @@ class ApproachGrip(Node):
             self.current_gripper_z = target_z
         if u_centered and v_centered and (not self.state == "APPROACH_OBJECT"):
             self.get_logger().info(f"ℹ️ Robot orientation is centered on object. Initiating approach")
-            self.state = "APPROACH_OBJECT"
+            self.update_state("APPROACH_OBJECT")
         return angular_vel_z, target_z, update_target_z
 
     def send_gripper_opening_goal(self, opening):
@@ -328,14 +394,14 @@ class ApproachGrip(Node):
         self.arm_is_moving = False
         if self.state == "HOME_GRIPPER":
             self.get_logger().info(f"ℹ️ Gripper is home. Starting object tracking...")
-            self.state = "ALIGN_OBJECT"
+            self.update_state("ALIGN_OBJECT")
         elif self.state == "RAISE_AND_REACH_GRIPPER":
             self.get_logger().info(f"ℹ️ Gripper raised. I can going to touch you now 💀...")
-            self.state = "TOUCH_THAT_THING"
+            self.update_state("TOUCH_THAT_THING")
             self.state_touch_that_thing()
         elif self.state == "LIFT_AND_RETRACT":
             self.get_logger().info(f"ℹ️ Object is lifted. Retreating away from the crime scene..")
-            self.state = "PREPARE_RETREAT"
+            self.update_state("PREPARE_RETREAT")
             self.state_prepare_retreat()
 
     def gripper_opening_callback(self, _):
@@ -343,7 +409,7 @@ class ApproachGrip(Node):
             return
         if self.state == "TOUCH_THAT_THING":
             self.get_logger().info(f"ℹ️ Dat ding is helemaal betast. 💪Nu nog even deadliften..")
-            self.state = "LIFT_AND_RETRACT"
+            self.update_state("LIFT_AND_RETRACT")
             self.state_deadlift()
 
     def stop_robot(self):
@@ -383,8 +449,11 @@ class ApproachGrip(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ApproachGrip()
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(node)
     try:
-        rclpy.spin(node)
+        # rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:

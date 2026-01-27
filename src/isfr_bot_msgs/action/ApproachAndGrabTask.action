@@ -1,0 +1,10 @@
+# Goal
+string target_label
+---
+# Result
+bool success
+string message
+---
+# Feedback
+string state
+builtin_interfaces/Time stamp
