@@ -16,6 +16,7 @@ CAMERA_PARAMS = {
 MARGIN_M              = 0.02   # 2 cm scan margin (finger width clearance)
 OCCLUSION_CLEARANCE_M = 0.05   # 5 cm finger depth clearance
 BOTTOM_CLEARANCE_M    = 0.10   # 10 cm table edge rule
+FORBIDDEN_GRASPLINE_HEIGTH = 0.30 # percentage of the bounding box, from the bottom
 
 DEBUG_WINDOW = False
 
@@ -141,8 +142,9 @@ class GripperSafetyNode(Node):
             best_width = 0
             best_cols = None
 
+            search_limit_row = int(mask.shape[0] * (1.0 - FORBIDDEN_GRASPLINE_HEIGTH))
 
-            for r in range(mask.shape[0] - px_margin*3, 0, -1):
+            for r in range(search_limit_row):
                 cols = np.where(mask[r])[0]
                 if len(cols) < 2:
                     continue
