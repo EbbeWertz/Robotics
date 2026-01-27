@@ -36,6 +36,12 @@ def generate_launch_description():
         )
     )
 
+    arm_ik_launcher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('isfr_bot_manipulation'), 'launch', 'ik.launch.py')
+        )
+    )
+
     rvizNode = Node(
         package='rviz2',
         executable='rviz2',
@@ -48,6 +54,6 @@ def generate_launch_description():
     return generate_webots_launch_description(
         start_immediately_nodes = [],
         # Voeg hier 'vision_launcher' toe aan de lijst
-        start_after_webots_init_nodes = [webots_controllers_launcher, vision_launcher, rvizNode, grip_launcher],
+        start_after_webots_init_nodes = [webots_controllers_launcher, vision_launcher, rvizNode, grip_launcher, arm_ik_launcher],
         controller_remappings = [('/diffdrive_controller/cmd_vel', '/cmd_vel_stamped')]
     )

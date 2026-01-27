@@ -12,13 +12,23 @@ import tf_transformations
 from isfr_bot_msgs.msg import GraspSafeObjectArray
 from .OdomObjectTracker import OdomObjectTracker
 from .DepthTemplateMatcherTracker import DepthTemplateRefiner
+from rclpy.action import ActionClient
+from isfr_bot_msgs.action import SetGripperPosition, SetGripperOpening
 
 # --- Configuration ---
 CAMERA_PARAMS = {
     "width": 640,
     "height": 480,
+    "center_u": 640//2,
     "FOV": 1.57
 }
+GRIPPER_HOME = (0.25, 0.18)
+GRIPPER_OPEN = 0.02
+KP_YAW = 0.005  # Proportional yaw gain
+MAX_YAW_VEL = 0.5 # yaw Rad/s limit
+YAW_TOLERANCE_PX = 2 # yaw tolerance
+
+TARGET_LABEL = "bottle"
 
 class ApproachGrip(Node):
     def __init__(self):
@@ -30,7 +40,7 @@ class ApproachGrip(Node):
         self.visual_refiner = DepthTemplateRefiner(self, search_margin=0.25)
 
         # --- State Machine ---
-        # States: "WAIT_FOR_OBJECTS" -> "LOCK_TARGET" -> "TRACK_OBJECT"
+        # States: "WAIT_FOR_OBJECTS" -> "LOCK_TARGET" -> "HOME_GRIPPER" -> "TRACK_OBJECT"
         self.state = "WAIT_FOR_OBJECTS"
         self.pending_object_data = None 
         self.current_odom_matrix = None
@@ -47,14 +57,9 @@ class ApproachGrip(Node):
         # Publishers
         self.cmd_pub = self.create_publisher(TwistStamped, '/cmd_vel_stamped', 10)
         self.debug_pub = self.create_publisher(Image, '/vision/grasp_track_debug', 10)
-
-        # Oscillation params
-        self.yaw_amplitude_rad = math.radians(10.0)
-        self.yaw_frequency_hz = 0.2 
-        self.start_time = None
+        self.gripper_pos_client = ActionClient(self, SetGripperPosition, '/set_gripper_position')
+        self.gripper_opening_client = ActionClient(self, SetGripperOpening, '/set_gripper_opening')
         
-        self.create_timer(0.05, self.timer_callback)
-
     # =========================================
     # CALLBACKS
     # =========================================
@@ -85,22 +90,6 @@ class ApproachGrip(Node):
             self.state_lock_target(depth_image, T_base_cam)
         elif self.state == "TRACK_OBJECT":
             self.state_track_object(depth_image, T_base_cam)
-
-    def timer_callback(self):
-        # Only move if we are actively tracking
-        if self.state != "TRACK_OBJECT" or self.start_time is None:
-            return
-        
-        t = (self.get_clock().now().nanoseconds / 1e9) - self.start_time
-        
-        # Oscillate
-        w = 2 * math.pi * self.yaw_frequency_hz
-        vel_z = self.yaw_amplitude_rad * w * math.cos(w * t)
-
-        twist = TwistStamped()
-        twist.header.stamp = self.get_clock().now().to_msg()
-        twist.twist.angular.z = vel_z
-        self.cmd_pub.publish(twist)
     
     # =========================================
     # STATES
@@ -108,7 +97,8 @@ class ApproachGrip(Node):
 
     def state_wait_for_object(self, msg):
         # Pick object closest to image center
-        target_obj = min(msg.objects, key=lambda o: abs((o.xmin + o.xmax)/2 - CAMERA_PARAMS['width']/2))
+        objects_typed = [o for o in msg.objects if o.label == TARGET_LABEL]
+        target_obj = min(objects_typed, key=lambda o: abs((o.xmin + o.xmax)/2 - CAMERA_PARAMS['width']/2))
         
         self.get_logger().info(f"Target Selected: {target_obj.label}. Transitioning to LOCK_TARGET.")
         
@@ -145,9 +135,11 @@ class ApproachGrip(Node):
         )
         
         if success_odom and success_vis:
-            self.get_logger().info(f"ℹ️ Locked targetL {obj.label} at [{u:.2f}, {v:.2f}]px, {z:.2f}m. Tracking...")
-            self.state = "TRACK_OBJECT"
-            self.start_time = self.get_clock().now().nanoseconds / 1e9
+            self.get_logger().info(f"ℹ️ Locked target {obj.label} at [{u:.2f}, {v:.2f}]px, {z:.2f}m. Setting gripper to home...")
+            self.state = "HOME_GRIPPER"
+            gr_x, gr_z = GRIPPER_HOME
+            self.send_gripper_pos_goal(gr_x, gr_z)
+            self.send_gripper_opening_goal(GRIPPER_OPEN)
         else:
             self.get_logger().warn("Lock failed (bad depth or bad box). Retrying...")
 
@@ -158,22 +150,16 @@ class ApproachGrip(Node):
         main_debug_img = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
         main_debug_img = cv2.cvtColor(main_debug_img, cv2.COLOR_GRAY2BGR)
 
+        angular_vel_z = 0.0
+
         if uv_guess:
             u_guess, v_guess = uv_guess
             
             # Draw Coarse Guess and search window (Cyan Cross)
             cv2.drawMarker(main_debug_img, (u_guess, v_guess), (255, 255, 0), cv2.MARKER_CROSS, 20, 2)
             
-            
-            # 2. Get Refined Position from Visual Tracker
-            # We need the current Z estimate to scale the template correctly.
-            # We can get it from the depth image at the guess point, or use the tracker's Z logic.
-            # Let's read the depth at the guess point for scaling:
             z_approx = depth_image[v_guess, u_guess]
-            if z_approx <= 0 or np.isnan(z_approx): 
-                # Fallback: calculate Z distance using Odom math
-                # (You might want to add a method to OdomTracker to get Z_cam)
-                z_approx = 1.0 # Default fallback
+            if z_approx <= 0 or np.isnan(z_approx): z_approx = 1.0 # Default fallback
             
             result = self.visual_refiner.track(depth_image, u_guess, v_guess, z_approx)
             
@@ -181,10 +167,20 @@ class ApproachGrip(Node):
                 u_fine, v_fine, (bx, by, bw, bh), refine_info = result
                 rx1, ry1, rx2, ry2 = refine_info["roi_rect"]
 
+                # control logic: rotate around z axis to align u_fine to center
+                error_u = u_fine - CAMERA_PARAMS['center_u']
+                is_centered = abs(error_u) <= YAW_TOLERANCE_PX
+                if not is_centered:
+                    angular_vel_z = -float(error_u) * KP_YAW
+                    angular_vel_z = np.clip(angular_vel_z, -MAX_YAW_VEL, MAX_YAW_VEL)
+                else:
+                    self.get_logger().info(f"ℹ️ Robot orientation is centered on object")
+
                 # 1. Draw only high-level overlays on the main feed
                 cv2.rectangle(main_debug_img, (rx1, ry1), (rx2, ry2), (255, 255, 0), 2) # Cyan ROI
                 cv2.circle(main_debug_img, (u_fine, v_fine), 5, (0, 0, 255), -1)        # Red Grab Point
                 cv2.rectangle(main_debug_img, (bx, by), (bx+bw, by+bh), (0, 0, 255), 2) # Red Object Box
+                cv2.rectangle(main_debug_img, (CAMERA_PARAMS['center_u'], 0), (CAMERA_PARAMS['center_u'], CAMERA_PARAMS['height']), (0, 255, 255), 2) # Center
                 
             else:
                 # Visual tracking lost (maybe occlusion?), fallback to just Green Cross
@@ -193,11 +189,59 @@ class ApproachGrip(Node):
         else:
             self.get_logger().warn("Odom target out of view")
 
+        cmd = TwistStamped()
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.twist.angular.z = angular_vel_z
+        self.cmd_pub.publish(cmd)
         self.debug_pub.publish(self.bridge.cv2_to_imgmsg(main_debug_img, 'bgr8'))
 
     # =========================================
     # HELPER
     # =========================================
+
+    def send_gripper_opening_goal(self, opening):
+        if not self.gripper_opening_client.wait_for_server(timeout_sec=2.0):
+            self.get_logger().error("Action server /set_gripper_opening not available!")
+            return
+        goal_msg = SetGripperOpening.Goal()
+        goal_msg.opening = opening
+        send_goal_future = self.gripper_opening_client.send_goal_async(goal_msg)
+        send_goal_future.add_done_callback(self.goal_opening_response_callback)
+
+    def send_gripper_pos_goal(self, x, z):
+        # Wait for server to be available
+        if not self.gripper_pos_client.wait_for_server(timeout_sec=2.0):
+            self.get_logger().error("Action server /set_gripper_position not available!")
+            return
+
+        goal_msg = SetGripperPosition.Goal()
+        goal_msg.x = x
+        goal_msg.z = z
+        send_goal_future = self.gripper_pos_client.send_goal_async(goal_msg)
+        send_goal_future.add_done_callback(self.goal_pos_response_callback)
+
+    def goal_pos_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().error("Gripper goal rejected")
+            return
+        goal_handle.get_result_async().add_done_callback(self.gripper_pos_callback)
+
+    def goal_opening_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().error("Gripper goal rejected")
+            return
+        goal_handle.get_result_async().add_done_callback(self.gripper_opening_callback)
+
+    def gripper_pos_callback(self, _):
+        if self.state == "HOME_GRIPPER":
+            self.get_logger().info(f"ℹ️ Gripper is home. Starting object tracking...")
+            self.state = "TRACK_OBJECT"
+
+    def gripper_opening_callback(self, _):
+        if self.state in ["HOME_GRIPPER", "TRACK_OBJECT"]:
+            return
 
     def get_camera_transform(self):
         """Helper to get T_base_camera safely"""
