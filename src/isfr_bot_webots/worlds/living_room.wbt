@@ -405,7 +405,7 @@ Table {
   translation 5.26011 -0.0505431 -0.000660216
   rotation 1.6320099579857856e-12 -0.00022690899415848958 -0.9999999742561537 1.570565307179586
   name "table(1)"
-  size 1.7 0.3 0.3
+  size 1.7 0.3 0.2
   feetSize 0.5 0.1
   frameThickness 0
   trayAppearance VarnishedPine {

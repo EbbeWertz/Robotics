@@ -31,7 +31,7 @@ MAX_YAW_VEL = 0.5 # yaw Rad/s limit
 TOLERANCE_PX = 2 # yaw tolerance
 KP_GRIPPER_Z = 0.002 # Sensitivity for vertical arm movement
 # approachment
-CAMERA_APPROACH_DISTANCE = 0.15
+CAMERA_APPROACH_DISTANCE = 0.175
 APPROACH_DISTANCE_THRESH = 0.01
 CAMERA_TO_GRIPPER_OFFSET = (-0.0617, 0.07)
 MAX_FORWARD_VEL = 0.1 # m/s
@@ -71,6 +71,7 @@ class ApproachGrip(Node):
 
         self.arm_is_moving = False
         self.current_gripper_z = GRIPPER_HOME[1]
+        self.stop_tracking = False
         
     # =========================================
     # CALLBACKS
@@ -181,7 +182,7 @@ class ApproachGrip(Node):
                 u_fine, v_fine, (bx, by, bw, bh), refine_info = result
                 rx1, ry1, rx2, ry2 = refine_info["roi_rect"]
 
-                if self.state in ["ALIGN_OBJECT", "APPROACH_OBJECT"]:
+                if (self.state in ["ALIGN_OBJECT", "APPROACH_OBJECT"]) and (not self.stop_tracking):
                     angular_vel_z, target_z, move_arm = self.alignment_control(u_fine, v_fine, angular_vel_z)
                     if move_arm:
                         self.send_gripper_pos_goal(GRIPPER_HOME[0], target_z)
@@ -198,6 +199,8 @@ class ApproachGrip(Node):
             else:
                 # Visual tracking lost (maybe occlusion?), fallback to just Green Cross
                 cv2.putText(main_debug_img, "VISUAL LOST", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
+                if self.state == "APPROACH_OBJECT":
+                    linear_vel_x = self.approach_object(depth_image, u_guess, v_guess)
         
         else:
             self.get_logger().warn("Odom target out of view")
@@ -210,7 +213,7 @@ class ApproachGrip(Node):
         self.debug_pub.publish(self.bridge.cv2_to_imgmsg(main_debug_img, 'bgr8'))
 
     def state_raise_and_reach_gripper(self):
-        target_z = self.current_gripper_z + CAMERA_TO_GRIPPER_OFFSET[1]
+        target_z = self.current_gripper_z - CAMERA_TO_GRIPPER_OFFSET[1]
         final_x = GRIPPER_HOME[0] + CAMERA_APPROACH_DISTANCE + CAMERA_TO_GRIPPER_OFFSET[0]
         self.send_gripper_pos_goal(final_x, target_z)
         self.current_gripper_z = target_z
@@ -222,7 +225,7 @@ class ApproachGrip(Node):
     def approach_object(self, depth_image, u_fine, v_fine):
         current_depth = depth_image[v_fine, u_fine]
         if current_depth <= 0 or np.isnan(current_depth): return
-
+        if current_depth <= 0.25: self.stop_tracking = True
         error_dist = current_depth - CAMERA_APPROACH_DISTANCE
         if error_dist <= APPROACH_DISTANCE_THRESH:
             self.get_logger().info("ℹ️ Approach distance reached. Lowering gripper...")
