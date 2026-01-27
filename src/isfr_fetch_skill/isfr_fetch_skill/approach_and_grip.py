@@ -32,7 +32,7 @@ TOLERANCE_PX = 2 # yaw tolerance
 KP_GRIPPER_Z = 0.002 # Sensitivity for vertical arm movement
 ALIGN_IGNORE_DISTANCE = 0.25 # stop aligning when closer than this (risk of object exceeding camera FOV)
 # approachment
-CAMERA_APPROACH_DISTANCE = 0.15
+CAMERA_APPROACH_DISTANCE = 0.12
 APPROACH_DISTANCE_THRESH = 0.01
 CAMERA_TO_GRIPPER_OFFSET = (-0.0617, 0.07)
 MAX_FORWARD_VEL = 0.1 # m/s
@@ -92,7 +92,7 @@ class ApproachGrip(Node):
         if self.state == "RETREAT":
             curr_x = T[0, 3]
             curr_y = T[1, 3]
-            dist_moved = math.sqrt((curr_x - self.start_odom_x)**2 + (curr_y - self.start_odom_y)**2)
+            dist_moved = math.sqrt((curr_x - self.retreat_start_odom_x)**2 + (curr_y - self.retreat_start_odom_y)**2)
             
             if dist_moved >= DRIVE_BACK_DISTANCE:
                 self.get_logger().info("✅ 🙌 🥳 🎉 Object pickup has succeeded.")
@@ -224,8 +224,8 @@ class ApproachGrip(Node):
 
         cmd = TwistStamped()
         cmd.header.stamp = self.get_clock().now().to_msg()
-        cmd.twist.angular.z = angular_vel_z
-        cmd.twist.linear.x = linear_vel_x
+        cmd.twist.angular.z = float(angular_vel_z)
+        cmd.twist.linear.x = float(linear_vel_x if linear_vel_x is not None else 0.0)
         self.cmd_pub.publish(cmd)
         self.debug_pub.publish(self.bridge.cv2_to_imgmsg(main_debug_img, 'bgr8'))
 
@@ -262,7 +262,7 @@ class ApproachGrip(Node):
         if current_depth <= ALIGN_IGNORE_DISTANCE: self.stop_tracking = True
         error_dist = current_depth - CAMERA_APPROACH_DISTANCE
         if error_dist <= APPROACH_DISTANCE_THRESH:
-            self.get_logger().info("ℹ️ Approach distance reached. Lowering gripper...")
+            self.get_logger().info("ℹ️ Approach distance reached. Raising gripper...")
             self.stop_robot()
             self.state = "RAISE_AND_REACH_GRIPPER"
             self.state_raise_and_reach_gripper()
@@ -293,7 +293,7 @@ class ApproachGrip(Node):
             self.get_logger().error("Action server /set_gripper_opening not available!")
             return
         goal_msg = SetGripperOpening.Goal()
-        goal_msg.opening = opening
+        goal_msg.opening = float(opening)
         send_goal_future = self.gripper_opening_client.send_goal_async(goal_msg)
         send_goal_future.add_done_callback(self.goal_opening_response_callback)
 
@@ -304,8 +304,8 @@ class ApproachGrip(Node):
             return
 
         goal_msg = SetGripperPosition.Goal()
-        goal_msg.x = x
-        goal_msg.z = z
+        goal_msg.x = float(x)
+        goal_msg.z = float(z)
         send_goal_future = self.gripper_pos_client.send_goal_async(goal_msg)
         send_goal_future.add_done_callback(self.goal_pos_response_callback)
         self.arm_is_moving = True
@@ -330,7 +330,7 @@ class ApproachGrip(Node):
             self.get_logger().info(f"ℹ️ Gripper is home. Starting object tracking...")
             self.state = "ALIGN_OBJECT"
         elif self.state == "RAISE_AND_REACH_GRIPPER":
-            self.get_logger().info(f"ℹ️ Gripper lowered. I can going to touch you now 💀...")
+            self.get_logger().info(f"ℹ️ Gripper raised. I can going to touch you now 💀...")
             self.state = "TOUCH_THAT_THING"
             self.state_touch_that_thing()
         elif self.state == "LIFT_AND_RETRACT":
@@ -347,7 +347,16 @@ class ApproachGrip(Node):
             self.state_deadlift()
 
     def stop_robot(self):
-        self.cmd_pub.publish(TwistStamped())
+        self.get_logger().info(f"🛑 Stopping locomotion")
+        msg = TwistStamped()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.twist.linear.x = 0.0
+        msg.twist.linear.y = 0.0
+        msg.twist.linear.z = 0.0
+        msg.twist.angular.x = 0.0
+        msg.twist.angular.y = 0.0
+        msg.twist.angular.z = 0.0
+        self.cmd_pub.publish(msg)
             
 
     def get_camera_transform(self):
@@ -367,7 +376,7 @@ class ApproachGrip(Node):
     def drive_backward_step(self):
         cmd = TwistStamped()
         cmd.header.stamp = self.get_clock().now().to_msg()
-        cmd.twist.linear.x = -MAX_FORWARD_VEL # Negative for reverse
+        cmd.twist.linear.x = float(-MAX_FORWARD_VEL) # Negative for reverse
         self.cmd_pub.publish(cmd)
 
 
