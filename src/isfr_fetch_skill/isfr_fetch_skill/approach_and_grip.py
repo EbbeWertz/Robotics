@@ -30,12 +30,14 @@ KP_YAW = 0.005  # Proportional yaw gain
 MAX_YAW_VEL = 0.5 # yaw Rad/s limit
 TOLERANCE_PX = 2 # yaw tolerance
 KP_GRIPPER_Z = 0.002 # Sensitivity for vertical arm movement
+ALIGN_IGNORE_DISTANCE = 0.25 # stop aligning when closer than this (risk of object exceeding camera FOV)
 # approachment
-CAMERA_APPROACH_DISTANCE = 0.175
+CAMERA_APPROACH_DISTANCE = 0.15
 APPROACH_DISTANCE_THRESH = 0.01
 CAMERA_TO_GRIPPER_OFFSET = (-0.0617, 0.07)
 MAX_FORWARD_VEL = 0.1 # m/s
 KP_FORWARD = 0.5
+GRASPING_OVERSHOOT_DEPTH = 0.03 # make sure the object rests in the center of the grippers
 
 TARGET_LABEL = "bottle"
 
@@ -213,8 +215,8 @@ class ApproachGrip(Node):
         self.debug_pub.publish(self.bridge.cv2_to_imgmsg(main_debug_img, 'bgr8'))
 
     def state_raise_and_reach_gripper(self):
-        target_z = self.current_gripper_z - CAMERA_TO_GRIPPER_OFFSET[1]
-        final_x = GRIPPER_HOME[0] + CAMERA_APPROACH_DISTANCE + CAMERA_TO_GRIPPER_OFFSET[0]
+        target_z = self.current_gripper_z + CAMERA_TO_GRIPPER_OFFSET[1]
+        final_x = GRIPPER_HOME[0] + CAMERA_APPROACH_DISTANCE + CAMERA_TO_GRIPPER_OFFSET[0] + GRASPING_OVERSHOOT_DEPTH
         self.send_gripper_pos_goal(final_x, target_z)
         self.current_gripper_z = target_z
 
@@ -225,7 +227,7 @@ class ApproachGrip(Node):
     def approach_object(self, depth_image, u_fine, v_fine):
         current_depth = depth_image[v_fine, u_fine]
         if current_depth <= 0 or np.isnan(current_depth): return
-        if current_depth <= 0.25: self.stop_tracking = True
+        if current_depth <= ALIGN_IGNORE_DISTANCE: self.stop_tracking = True
         error_dist = current_depth - CAMERA_APPROACH_DISTANCE
         if error_dist <= APPROACH_DISTANCE_THRESH:
             self.get_logger().info("ℹ️ Approach distance reached. Lowering gripper...")
