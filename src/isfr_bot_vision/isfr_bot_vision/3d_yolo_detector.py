@@ -77,7 +77,7 @@ class YoloDetector(Node):
             return
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            results = self.model(cv_image, verbose=False, conf=0.4)
+            results = self.model(cv_image, verbose=False, conf=0.6)
             annotated_frame = results[0].plot()
 
             object_array_msg = YoloVisionObjectArray()

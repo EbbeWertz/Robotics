@@ -27,7 +27,7 @@ class ApproachGrip(Node):
         
         # --- Helper Classes ---
         self.odom_tracker = OdomObjectTracker(CAMERA_PARAMS)
-        self.visual_refiner = DepthTemplateRefiner()
+        self.visual_refiner = DepthTemplateRefiner(self, search_margin=0.25)
 
         # --- State Machine ---
         # States: "WAIT_FOR_OBJECTS" -> "LOCK_TARGET" -> "TRACK_OBJECT"
@@ -155,14 +155,15 @@ class ApproachGrip(Node):
         # 1. Get Coarse Guess from Odom
         uv_guess = self.odom_tracker.get_projected_pixel(self.current_odom_matrix, T_base_cam)
         
-        debug_img = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
-        debug_img = cv2.cvtColor(debug_img, cv2.COLOR_GRAY2BGR)
+        main_debug_img = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
+        main_debug_img = cv2.cvtColor(main_debug_img, cv2.COLOR_GRAY2BGR)
 
         if uv_guess:
             u_guess, v_guess = uv_guess
             
-            # Draw Coarse Guess (Green Cross)
-            cv2.drawMarker(debug_img, (u_guess, v_guess), (0, 255, 0), cv2.MARKER_CROSS, 20, 2)
+            # Draw Coarse Guess and search window (Cyan Cross)
+            cv2.drawMarker(main_debug_img, (u_guess, v_guess), (255, 255, 0), cv2.MARKER_CROSS, 20, 2)
+            
             
             # 2. Get Refined Position from Visual Tracker
             # We need the current Z estimate to scale the template correctly.
@@ -177,20 +178,22 @@ class ApproachGrip(Node):
             result = self.visual_refiner.track(depth_image, u_guess, v_guess, z_approx)
             
             if result:
-                u_fine, v_fine, (bx, by, bw, bh) = result
-                
-                # Draw Fine Result (Red Circle + Box)
-                cv2.circle(debug_img, (u_fine, v_fine), 5, (0, 0, 255), -1) # The Grab Point
-                cv2.rectangle(debug_img, (bx, by), (bx+bw, by+bh), (0, 0, 255), 2) # The Scaled Box
+                u_fine, v_fine, (bx, by, bw, bh), refine_info = result
+                rx1, ry1, rx2, ry2 = refine_info["roi_rect"]
+
+                # 1. Draw only high-level overlays on the main feed
+                cv2.rectangle(main_debug_img, (rx1, ry1), (rx2, ry2), (255, 255, 0), 2) # Cyan ROI
+                cv2.circle(main_debug_img, (u_fine, v_fine), 5, (0, 0, 255), -1)        # Red Grab Point
+                cv2.rectangle(main_debug_img, (bx, by), (bx+bw, by+bh), (0, 0, 255), 2) # Red Object Box
                 
             else:
                 # Visual tracking lost (maybe occlusion?), fallback to just Green Cross
-                cv2.putText(debug_img, "VISUAL LOST", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
+                cv2.putText(main_debug_img, "VISUAL LOST", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
         
         else:
             self.get_logger().warn("Odom target out of view")
 
-        self.debug_pub.publish(self.bridge.cv2_to_imgmsg(debug_img, 'bgr8'))
+        self.debug_pub.publish(self.bridge.cv2_to_imgmsg(main_debug_img, 'bgr8'))
 
     # =========================================
     # HELPER

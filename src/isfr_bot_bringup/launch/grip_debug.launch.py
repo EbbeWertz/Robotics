@@ -16,7 +16,7 @@ from isfr_bot_webots.launcher_scaffold import generate_webots_launch_description
 
 def generate_launch_description():
 
-    rvizConfigFile = os.path.join(get_package_share_directory('isfr_bot_vision'), 'rviz', 'debug_cameras.rviz')
+    rvizConfigFile = os.path.join(get_package_share_directory('isfr_fetch_skill'), 'rviz', 'visuals_views.rviz')
 
     webots_controllers_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
