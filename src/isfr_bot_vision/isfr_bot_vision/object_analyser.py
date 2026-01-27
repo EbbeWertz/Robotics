@@ -142,7 +142,7 @@ class GripperSafetyNode(Node):
             best_cols = None
 
 
-            for r in range(mask.shape[0] - px_margin*3):
+            for r in range(mask.shape[0] - px_margin*3, 0, -1):
                 cols = np.where(mask[r])[0]
                 if len(cols) < 2:
                     continue
