@@ -21,16 +21,16 @@ class ObjectVisualizer(Node):
 
     def listener_callback(self, msg):
         marker_array = MarkerArray()
-        target_frame = "arm_base_link"
+        target_frame = "odom"
 
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL
-        marker_array.markers.append(delete_marker)
+        # marker_array.markers.append(delete_marker)
 
         # Loop door alle gevonden objecten in de lijst
         for i, obj in enumerate(msg.objects):
             self.get_logger().info(f'Visualizing object: {obj.label} at ({obj.x}, {obj.y}, {obj.z})')
-            
+                        
             # --- 1. De Visuele Bol (Positie) ---
             sphere_marker = Marker()
             sphere_marker.header.frame_id = target_frame

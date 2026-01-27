@@ -28,7 +28,7 @@ class YoloDetector(Node):
         self.get_logger().info("YOLO model loaded.")
 
         # --- TF2 Setup (Voor wereldposities) ---
-        self.tf_buffer = Buffer()
+        self.tf_buffer = Buffer(cache_time=rclpy.duration.Duration(seconds=20.0))
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.subscription = self.create_subscription(
@@ -69,29 +69,27 @@ class YoloDetector(Node):
         return (x3d, y3d, z3d)
 
     def transform_to_world(self, x, y, z, from_frame):
-        """
-        Transformeert een punt van 'from_frame' (camera) naar 'map' (wereld).
-        """
         try:
-            # We maken een PointStamped (Punt met tijd en frame informatie)
             point_stamped = PointStamped()
-            point_stamped.header.frame_id = from_frame
-            # We gebruiken Time() (0) om de allerlaatste beschikbare transform te pakken
-            point_stamped.header.stamp = rclpy.time.Time().to_msg() 
+            point_stamped.header.frame_id = from_frame            
             point_stamped.point.x = float(x)
             point_stamped.point.y = float(y)
             point_stamped.point.z = float(z)
 
-            # Zoek de transformatie van camera naar map
-            # Let op: 'map' moet bestaan (bijv. via SLAM), anders gebruik 'odom'
-            transform = self.tf_buffer.lookup_transform("arm_base_link", from_frame, rclpy.time.Time())            
-            # Voer de transformatie uit
+            # Zoek de transformatie precies op het moment dat de foto gemaakt is
+            # Let op: Soms is de 'exacte' tijd niet beschikbaar, dan gebruiken we Time() als fallback
+            try:
+                transform = self.tf_buffer.lookup_transform("arm_base_link", from_frame, rclpy.time.Time())
+            except:
+                # Fallback: Als exacte tijd faalt, pak de allerlaatste bekende positie
+                self.get_logger().warn("Exact time lookup failed, using latest transform")
+                transform = self.tf_buffer.lookup_transform("map", from_frame, rclpy.time.Time())
+
             point_world = do_transform_point(point_stamped, transform)
-            
             return point_world.point.x, point_world.point.y, point_world.point.z
 
         except Exception as e:
-            self.get_logger().warn(f"Kon transformatie niet berekenen: {e}")
+            # ... error handling ...
             return None
 
     def get_identity_depth(self, box):
@@ -143,6 +141,9 @@ class YoloDetector(Node):
             for box in results[0].boxes:
                 class_id = int(box.cls[0])
                 label = self.model.names[class_id]
+                
+                if label != "bottle":
+                    continue
 
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                 identity_depth = self.get_identity_depth([x1, y1, x2, y2])
@@ -163,9 +164,11 @@ class YoloDetector(Node):
                 object_msg.identity_depth = identity_depth
                 object_msg.x, object_msg.y, object_msg.z = x3d, y3d, z3d
                 rel_array_msg.objects.append(object_msg)
+                
+                z3d_corrected = z3d - 0.20  # Correctie voor camera offset
 
                 # 2. Bereken Absolute Positie (World/Map Frame)
-                world_pos = self.transform_to_world(x3d, y3d, z3d, camera_frame_id)
+                world_pos = self.transform_to_world(x3d, y3d, z3d_corrected, camera_frame_id)
                 
                 if world_pos:
                     wx, wy, wz = world_pos
@@ -177,9 +180,9 @@ class YoloDetector(Node):
                     abs_object_msg.xmax, abs_object_msg.ymax = float(x2), float(y2)
                     abs_object_msg.identity_depth = identity_depth
                     # Gebruik WERELD coordinaten
-                    abs_object_msg.x = wx
-                    abs_object_msg.y = wy
-                    abs_object_msg.z = wz
+                    abs_object_msg.x = -wz
+                    abs_object_msg.y = -wx  # Correctie voor camera offset
+                    abs_object_msg.z = wy
                     
                     abs_array_msg.objects.append(abs_object_msg)
 

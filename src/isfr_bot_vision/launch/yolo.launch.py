@@ -1,8 +1,10 @@
+import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-
+    
     yolo_node = Node(
             package='isfr_bot_vision',
             executable='detector',
@@ -13,7 +15,7 @@ def generate_launch_description():
             remappings=[
                 ('/image_raw', '/camera/image_raw'),       # Pas aan als Webots topic anders heet
                 ('/camera_info', '/camera/camera_info')
-            ]
+            ],
         )
     
     object_analyser_node = Node(
