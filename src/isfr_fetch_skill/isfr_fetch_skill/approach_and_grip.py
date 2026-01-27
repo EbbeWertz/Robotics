@@ -38,6 +38,9 @@ CAMERA_TO_GRIPPER_OFFSET = (-0.0617, 0.07)
 MAX_FORWARD_VEL = 0.1 # m/s
 KP_FORWARD = 0.5
 GRASPING_OVERSHOOT_DEPTH = 0.03 # make sure the object rests in the center of the grippers
+# retreat
+LIFT_HEIGHT = 0.01  # 1cm
+DRIVE_BACK_DISTANCE = 0.25
 
 TARGET_LABEL = "bottle"
 
@@ -85,6 +88,18 @@ class ApproachGrip(Node):
         T = tf_transformations.quaternion_matrix([q.x, q.y, q.z, q.w])
         T[0:3, 3] = [t.x, t.y, t.z]
         self.current_odom_matrix = T
+
+        if self.state == "RETREAT":
+            curr_x = T[0, 3]
+            curr_y = T[1, 3]
+            dist_moved = math.sqrt((curr_x - self.start_odom_x)**2 + (curr_y - self.start_odom_y)**2)
+            
+            if dist_moved >= DRIVE_BACK_DISTANCE:
+                self.get_logger().info("✅ 🙌 🥳 🎉 Object pickup has succeeded.")
+                self.stop_robot()
+                self.state = "COMPLETED"
+            else:
+                self.drive_backward_step()
 
     def grasp_objects_callback(self, msg):
         # Only listen if we are waiting for an object
@@ -220,6 +235,23 @@ class ApproachGrip(Node):
         self.send_gripper_pos_goal(final_x, target_z)
         self.current_gripper_z = target_z
 
+    def state_touch_that_thing(self):
+        self.send_gripper_opening_goal(0.0)
+
+    def state_deadlift(self):
+        retract_x = GRIPPER_HOME[0]
+        target_z = self.current_gripper_z + LIFT_HEIGHT
+        self.send_gripper_pos_goal(retract_x, target_z)
+
+    def state_prepare_retreat(self):
+        if self.current_odom_matrix is not None:
+            self.retreat_start_odom_x = self.current_odom_matrix[0, 3]
+            self.retreat_start_odom_y = self.current_odom_matrix[1, 3]
+            self.state = "RETREAT"
+            self.get_logger().info("ℹ️ Initialised retreat protocol. Retreating now...")
+        else:
+            self.get_logger().error("Odom lost! Cannot drive back safely.")
+
     # =========================================
     # HELPER
     # =========================================
@@ -231,8 +263,7 @@ class ApproachGrip(Node):
         error_dist = current_depth - CAMERA_APPROACH_DISTANCE
         if error_dist <= APPROACH_DISTANCE_THRESH:
             self.get_logger().info("ℹ️ Approach distance reached. Lowering gripper...")
-            cmd = TwistStamped() # stop
-            self.cmd_pub.publish(cmd)
+            self.stop_robot()
             self.state = "RAISE_AND_REACH_GRIPPER"
             self.state_raise_and_reach_gripper()
         else:
@@ -299,12 +330,25 @@ class ApproachGrip(Node):
             self.get_logger().info(f"ℹ️ Gripper is home. Starting object tracking...")
             self.state = "ALIGN_OBJECT"
         elif self.state == "RAISE_AND_REACH_GRIPPER":
-            self.get_logger().info(f"ℹ️ Gripper lowered. Initiating final stretch...")
-            self.state = "FINAL_STRETCH"
+            self.get_logger().info(f"ℹ️ Gripper lowered. I can going to touch you now 💀...")
+            self.state = "TOUCH_THAT_THING"
+            self.state_touch_that_thing()
+        elif self.state == "LIFT_AND_RETRACT":
+            self.get_logger().info(f"ℹ️ Object is lifted. Retreating away from the crime scene..")
+            self.state = "PREPARE_RETREAT"
+            self.state_prepare_retreat()
 
     def gripper_opening_callback(self, _):
         if self.state in ["HOME_GRIPPER", "TRACK_OBJECT"]:
             return
+        if self.state == "TOUCH_THAT_THING":
+            self.get_logger().info(f"ℹ️ Dat ding is helemaal betast. 💪Nu nog even deadliften..")
+            self.state = "LIFT_AND_RETRACT"
+            self.state_deadlift()
+
+    def stop_robot(self):
+        self.cmd_pub.publish(TwistStamped())
+            
 
     def get_camera_transform(self):
         """Helper to get T_base_camera safely"""
@@ -319,6 +363,12 @@ class ApproachGrip(Node):
             return T
         except Exception:
             return None
+        
+    def drive_backward_step(self):
+        cmd = TwistStamped()
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.twist.linear.x = -MAX_FORWARD_VEL # Negative for reverse
+        self.cmd_pub.publish(cmd)
 
 
 def main(args=None):
