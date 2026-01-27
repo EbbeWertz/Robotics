@@ -1,0 +1,9 @@
+# Goal
+string label
+---
+# Result
+bool success
+string message
+---
+# Feedback
+float32 distance_to_target

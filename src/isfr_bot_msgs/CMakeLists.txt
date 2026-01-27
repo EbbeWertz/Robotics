@@ -16,6 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GraspSafeObjectArray.msg"
   "action/SetGripperOpening.action"
   "action/SetGripperPosition.action"
+  "action/FetchObject.action"
   DEPENDENCIES std_msgs geometry_msgs
 )
 
