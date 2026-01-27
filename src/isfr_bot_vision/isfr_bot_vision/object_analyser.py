@@ -15,7 +15,7 @@ CAMERA_PARAMS = {
 # --- Gripper / safety parameters (meters) ---
 MARGIN_M              = 0.02   # 2 cm scan margin (finger width clearance)
 OCCLUSION_CLEARANCE_M = 0.05   # 5 cm finger depth clearance
-BOTTOM_CLEARANCE_M    = 0.15   # 10 cm table edge rule
+BOTTOM_CLEARANCE_M    = 0.10   # 10 cm table edge rule
 
 DEBUG_WINDOW = False
 
