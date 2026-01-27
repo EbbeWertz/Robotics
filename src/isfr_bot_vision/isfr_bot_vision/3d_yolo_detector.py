@@ -141,9 +141,6 @@ class YoloDetector(Node):
             for box in results[0].boxes:
                 class_id = int(box.cls[0])
                 label = self.model.names[class_id]
-                
-                if label != "bottle":
-                    continue
 
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                 identity_depth = self.get_identity_depth([x1, y1, x2, y2])
