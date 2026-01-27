@@ -1,112 +1,116 @@
-import numpy as np
 import cv2
+import numpy as np
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 
 class DepthTemplateRefiner:
-    def __init__(self):
+    def __init__(self, node, search_margin=0.25):
+        self.node = node
+        self.bridge = CvBridge()
         self.template = None
         self.initial_z = 1.0
         self.orig_h = 0
         self.orig_w = 0
+        self.search_margin = search_margin 
         
-        # Grab offset relative to bbox top-left
-        self.grab_offset_u = 0
-        self.grab_offset_v = 0
+        # Geometry offsets
+        self.norm_dist_left = 0.0
+        self.norm_dist_right = 0.0
+        self.norm_dist_top = 0.0
+        self.norm_dist_bottom = 0.0
 
-    def initialize(self, depth_img, bbox_x, bbox_y, bbox_w, bbox_h, grasp_u_global, grasp_v_global, z_depth):
-        """
-        Captures the initial template from the depth image.
-        """
-        # 1. Sanity check bounds
-        h, w = depth_img.shape
-        x1 = max(0, int(bbox_x))
-        y1 = max(0, int(bbox_y))
-        x2 = min(w, int(bbox_x + bbox_w))
-        y2 = min(h, int(bbox_y + bbox_h))
+        # Dedicated Publisher
+        self.debug_pub = self.node.create_publisher(Image, '/vision/refiner_internal_debug', 10)
+
+    def initialize(self, depth_img, bbox_x, bbox_y, bbox_w, bbox_h, grasp_u, grasp_v, z_depth):
+        h_img, w_img = depth_img.shape
+        x1, y1 = max(0, int(bbox_x)), max(0, int(bbox_y))
+        x2, y2 = min(w_img, int(bbox_x + bbox_w)), min(h_img, int(bbox_y + bbox_h))
         
-        if x2 <= x1 or y2 <= y1:
-            return False
+        if x2 <= x1 or y2 <= y1: return False
 
-        # 2. Crop and Store Template
-        # We use the raw float depth. It is robust for shape matching.
-        # We normalize it to handle lighting/sensor gain changes slightly better, 
-        # though raw float matchTemplate works too.
         self.template = depth_img[y1:y2, x1:x2].copy()
-        
-        # Replace NaNs with 0 or max depth to avoid matching errors
         self.template = np.nan_to_num(self.template, nan=0.0)
-
         self.initial_z = z_depth
         self.orig_h, self.orig_w = self.template.shape
-        
-        # Store where the grasp point is relative to the top-left of the box
-        self.grab_offset_u = grasp_u_global - x1
-        self.grab_offset_v = grasp_v_global - y1
+
+        self.norm_dist_left = (grasp_u - x1) / self.orig_w
+        self.norm_dist_right = (x2 - grasp_u) / self.orig_w
+        self.norm_dist_top = (grasp_v - y1) / self.orig_h
+        self.norm_dist_bottom = (y2 - grasp_v) / self.orig_h
         
         return True
 
     def track(self, depth_img, guess_u, guess_v, current_z_estimate):
-        """
-        Refines the (u,v) position by searching around the guess.
-        Returns: (refined_u, refined_v, refined_bbox_rect)
-        """
-        if self.template is None:
-            return None
-
+        if self.template is None: return None
         img_h, img_w = depth_img.shape
 
-        # 1. Calculate Scale Change
-        # If object gets closer (smaller Z), scale increases.
-        if current_z_estimate < 0.1: current_z_estimate = 0.1 # Safety
-        scale = self.initial_z / current_z_estimate
-        
-        # 2. Resize Template
-        # We want the template to match the object's current size in the image
-        new_w = int(self.orig_w * scale)
-        new_h = int(self.orig_h * scale)
-        
-        if new_w <= 0 or new_h <= 0 or new_w > img_w or new_h > img_h:
-            return None # Object too big/small or out of frame
+        scale = self.initial_z / max(0.1, current_z_estimate)
+        cur_w, cur_h = self.orig_w * scale, self.orig_h * scale
 
-        scaled_template = cv2.resize(self.template, (new_w, new_h))
+        # Construct Search ROI
+        mw, mh = cur_w * self.search_margin, cur_h * self.search_margin
+        roi_x1 = max(0, int(guess_u - (cur_w * self.norm_dist_left) - mw))
+        roi_x2 = min(img_w, int(guess_u + (cur_w * self.norm_dist_right) + mw))
+        roi_y1 = max(0, int(guess_v - (cur_h * self.norm_dist_top) - mh))
+        roi_y2 = min(img_h, int(guess_v + (cur_h * self.norm_dist_bottom) + mh))
 
-        # 3. Define Search ROI (Region of Interest)
-        # We trust the Odom guess to be within +/- Search Window pixels
-        SEARCH_WINDOW = 80 # px
+        scaled_template = cv2.resize(self.template, (int(cur_w), int(cur_h)))
         
-        roi_x1 = max(0, int(guess_u - SEARCH_WINDOW))
-        roi_y1 = max(0, int(guess_v - SEARCH_WINDOW))
-        roi_x2 = min(img_w, int(guess_u + SEARCH_WINDOW))
-        roi_y2 = min(img_h, int(guess_v + SEARCH_WINDOW))
-
-        # Ensure ROI is larger than template
-        if (roi_x2 - roi_x1) < new_w or (roi_y2 - roi_y1) < new_h:
+        if (roi_x2 - roi_x1) < scaled_template.shape[1] or (roi_y2 - roi_y1) < scaled_template.shape[0]:
             return None
 
-        roi_img = depth_img[roi_y1:roi_y2, roi_x1:roi_x2].copy()
-        roi_img = np.nan_to_num(roi_img, nan=0.0)
-
-        # 4. Match Template
-        # TM_SQDIFF is usually good for depth (least difference in Z values)
-        # But TM_CCOEFF_NORMED is better if the absolute depth values shift slightly
+        roi_img = np.nan_to_num(depth_img[roi_y1:roi_y2, roi_x1:roi_x2], nan=0.0)
         res = cv2.matchTemplate(roi_img, scaled_template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
 
-        # Threshold to ensure we actually found the object (0.5 is arbitrary, tune as needed)
-        if max_val < 0.4:
-            return None
-
-        # 5. Calculate Refined Global Coordinates
-        # max_loc is relative to the ROI top-left
-        # We need to find the new top-left of the detected box in the global image
-        top_left_x = roi_x1 + max_loc[0]
-        top_left_y = roi_y1 + max_loc[1]
-
-        # 6. Recover the Grab Point
-        # Scale the original offset
-        cur_offset_u = self.grab_offset_u * scale
-        cur_offset_v = self.grab_offset_v * scale
+        # Map Results
+        tlx, tly = roi_x1 + max_loc[0], roi_y1 + max_loc[1]
+        refined_u = int(tlx + (cur_w * self.norm_dist_left))
+        refined_v = int(tly + (cur_h * self.norm_dist_top))
         
-        refined_u = int(top_left_x + cur_offset_u)
-        refined_v = int(top_left_y + cur_offset_v)
+        # Internal Dashboard Publish
+        self._publish_internal_debug(scaled_template, roi_img, res, max_val)
+
+        debug_info = {"roi_rect": (roi_x1, roi_y1, roi_x2, roi_y2)}
+        return (refined_u, refined_v, (tlx, tly, int(cur_w), int(cur_h)), debug_info)
+
+    def _publish_internal_debug(self, template, roi, heatmap, score):
+        """Creates a horizontal dashboard of the CV process with title bars."""
+        def norm(img): 
+            return cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
         
-        return (refined_u, refined_v, (top_left_x, top_left_y, new_w, new_h))
+        # 1. Convert to BGR
+        t_view = cv2.cvtColor(norm(template), cv2.COLOR_GRAY2BGR)
+        r_view = cv2.cvtColor(norm(roi), cv2.COLOR_GRAY2BGR)
+        h_view = cv2.applyColorMap(norm(heatmap), cv2.COLORMAP_JET)
+
+        # 2. Standardization params
+        panel_h = 240 # Fixed height for horizontal stacking
+        title_h = 30  # Height of the black title bar
+        
+        def prepare_panel(img, label):
+            # Resize image to fixed height
+            h, w = img.shape[:2]
+            new_w = int(w * (panel_h / h))
+            img_resized = cv2.resize(img, (new_w, panel_h))
+            
+            # Create a black title bar
+            title_bar = np.zeros((title_h, new_w, 3), dtype=np.uint8)
+            cv2.putText(title_bar, label, (5, 20), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            
+            # Stack title bar on top of image
+            return cv2.vconcat([title_bar, img_resized])
+
+        # 3. Process panels
+        p1 = prepare_panel(t_view, "TEMPLATE")
+        p2 = prepare_panel(r_view, "SEARCH ROI")
+        p3 = prepare_panel(h_view, f"MATCH HEATMAP (Score: {score:.2f})")
+
+        # 4. Horizontal Concatenation
+        # Add a small 2px white border/spacer between panels for clarity
+        spacer = np.ones((panel_h + title_h, 2, 3), dtype=np.uint8) * 255
+        dashboard = cv2.hconcat([p1, spacer, p2, spacer, p3])
+        
+        self.debug_pub.publish(self.bridge.cv2_to_imgmsg(dashboard, 'bgr8'))
