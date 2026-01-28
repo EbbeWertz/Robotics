@@ -3,10 +3,10 @@ amcl:
     use_sim_time: True
     use_map_topic: true
     # odometry noise should be very low
-    alpha1: 0.0001    # Zet deze flink hoger (was 0.2). Probeer 0.5 tot 1.0.
-    alpha2: 0.0001    # Rotatie-fout door rechtdoor rijden
-    alpha3: 0.0001    # Translatie-fout door rechtdoor rijden
-    alpha4: 0.0001    # Zet deze ook hoger (was 0.2).
+    alpha1: 0.005    # Zet deze flink hoger (was 0.2). Probeer 0.5 tot 1.0.
+    alpha2: 0.005    # Rotatie-fout door rechtdoor rijden
+    alpha3: 0.005    # Translatie-fout door rechtdoor rijden
+    alpha4: 0.005    # Zet deze ook hoger (was 0.2).
     base_frame_id: "base_link"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -73,9 +73,9 @@ controller_server:
   ros__parameters:
     use_sim_time: True
     controller_frequency: 10.0
-    min_x_velocity_threshold: 0.001
+    min_x_velocity_threshold: 0.01
     min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.01
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"] 
@@ -90,8 +90,8 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.15
+      yaw_goal_tolerance: 0.17
 
     # DWB parameters
     FollowPath:
@@ -114,7 +114,7 @@ controller_server:
       decel_lim_x: -1.0      # <--- Zet deze op -1.0
       decel_lim_theta: -0.5  # <--- Zet deze op -0.5
       min_speed_theta: 0.0
-      min_speed_xy: 0.0
+      min_speed_xy: 0.05
       max_speed_xy: 0.22
       acc_lim_y: 0.0
       decel_lim_y: 0.0
@@ -125,8 +125,10 @@ controller_server:
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.05
-      trans_stopped_velocity: 0.25
+      xy_goal_tolerance: 0.15
+      yaw_goal_tolerance: 0.17
+      trans_stopped_velocity: 0.10
+      rot_stopped_velocity: 0.10
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
