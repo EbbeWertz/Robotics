@@ -67,7 +67,7 @@ class BottleFetcherActionServer(Node):
         tx, ty = target
         
         # 2. Bereken veilige approach pose
-        approach = self.checker.get_safe_approach_point(tx, ty, stop_dist=0.55)
+        approach = self.checker.get_safe_approach_point(tx, ty, stop_dist=0.75)
         
         if not approach:
             self.get_logger().error("Doel gevonden, maar locatie is onbereikbaar!")

@@ -2,12 +2,13 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
 from isfr_bot_msgs.msg import YoloVisionObjectArray
-
+import pickle
+from std_msgs.msg import Empty
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 import time
 import math
-
+import os
 
 # =======================
 # GRID CONFIG
@@ -38,6 +39,7 @@ class KnowledgeMapNode(Node):
 
     def __init__(self):
         super().__init__('knowledge_map')
+        self.filename = 'semantic_map.pkl'
 
         self.belief_grid = defaultdict(
             lambda: defaultdict(
@@ -45,10 +47,32 @@ class KnowledgeMapNode(Node):
             )
         )
 
+        #  Attempt to LOAD from file
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, 'rb') as f:
+                    raw_data = pickle.load(f)
+                    # Re-populate the nested structure
+                    for cx, y_dict in raw_data.items():
+                        for cy, beliefs in y_dict.items():
+                            for obj_type, belief_obj in beliefs.items():
+                                self.belief_grid[cx][cy][obj_type] = belief_obj
+                self.get_logger().info(f'Successfully loaded map from {self.filename}')
+            except Exception as e:
+                self.get_logger().error(f'Failed to load map: {e}')
+        else:
+            self.get_logger().info('No existing map file found. Starting fresh.')
+
         self.subscription = self.create_subscription(
             YoloVisionObjectArray,
             '/vision/absolute_position',
             self.listener_callback,
+            10
+        )
+        self.save_sub = self.create_subscription(
+            Empty,
+            '/knowledge/save',
+            self.save_map_callback,
             10
         )
 
@@ -157,6 +181,21 @@ class KnowledgeMapNode(Node):
 
         grid.data = data
         return grid
+    
+    def save_map_callback(self, msg):
+        """Triggered when someone publishes to /knowledge/save"""
+        self.get_logger().info('Save signal received! Saving map...')
+        try:
+            # Convert defaultdict to standard dict for pickle
+            data_to_save = {
+                cx: {cy: dict(beliefs) for cy, beliefs in y_dict.items()}
+                for cx, y_dict in self.belief_grid.items()
+            }
+            with open(self.filename, 'wb') as f:
+                pickle.dump(data_to_save, f)
+            self.get_logger().info(f'Map successfully saved to {self.filename}')
+        except Exception as e:
+            self.get_logger().error(f'Save failed: {e}')
 
 
 # =======================
